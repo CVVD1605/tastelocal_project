@@ -27,3 +27,20 @@ class UserRegisterForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if initial_role:
             self.fields['role'].initial = initial_role
+    
+    def save(self, commit=True):
+        user = super().save(commit=False)
+         # Set the user’s password (hash it)
+        user.set_password(self.cleaned_data['password'])
+
+         # Set role flags
+        role = self.cleaned_data.get('role')
+        if role == 'vendor':
+            user.is_vendor = True
+        elif role == 'tourist':
+            user.is_tourist = True
+
+        if commit:
+            user.save()
+
+        return user

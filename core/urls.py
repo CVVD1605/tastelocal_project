@@ -26,6 +26,7 @@ urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
     path('thank-you/', ThankYouView.as_view(), name='thank-you'),
     # Vendor Food Management
+    path('vendor/food/create/', VendorFoodItemCreateView.as_view(), name='vendor-fooditem-create'),
     path('vendor/food-items/', VendorFoodItemListView.as_view(), name='vendor-fooditem-list'),
     path('vendor/food-items/add/', VendorFoodItemCreateView.as_view(), name='vendor-fooditem-add'),
     path('vendor/food-items/<int:pk>/edit/', VendorFoodItemUpdateView.as_view(), name='vendor-fooditem-edit'),

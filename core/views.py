@@ -4,13 +4,16 @@ from .models import FoodItem, VendorProfile, Booking, Cuisine
 from .forms import VendorProfileForm, UserRegisterForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
+from django.contrib.auth import login
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.views import LoginView
 from django.contrib.auth import get_user_model
-from django.db.models import Q  # Ensure Q is imported for query composition
+from django.db.models import Q 
+from django.utils import timezone
+from datetime import timedelta
 
 User = get_user_model()
 
@@ -18,53 +21,15 @@ User = get_user_model()
 class HomeView(TemplateView):
     template_name = 'home.html'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['featured_vendors'] = VendorProfile.objects.prefetch_related('food_items').order_by('-created_at')[:3]
+        return context
+
 # Search functionality
 class SearchResultsView(TemplateView):
     template_name = 'search/results.html'
 
-    # def get_context_data(self, **kwargs):
-    #     context = super().get_context_data(**kwargs)
-
-    #     query = self.request.GET.get('search', '')
-    #     selected_cuisine = self.request.GET.get('cuisine')
-    #     selected_price = self.request.GET.get('price')
-    #     selected_rating = self.request.GET.get('rating')
-
-    #     # vendor_queryset = VendorProfile.objects.all()
-    #     vendor_queryset = vendor_queryset.prefetch_related('food_items')
-
-
-    #     if query:
-    #         vendor_queryset = vendor_queryset.filter(
-    #             Q(business_name__icontains=query) |
-    #             Q(description__icontains=query)
-    #         )
-    #     if selected_cuisine:
-    #         vendor_queryset = vendor_queryset.filter(cuisine__iexact=selected_cuisine)
-
-    #     if selected_cuisine:
-    #         vendor_queryset = vendor_queryset.filter(cuisine__iexact=selected_cuisine)
-
-    #     if selected_price:
-    #         vendor_queryset = vendor_queryset.filter(food_items__price__lte=selected_price)
-
-    #     if selected_rating:
-    #         vendor_queryset = vendor_queryset.filter(average_rating__gte=selected_rating)
-
-    #     #  Add debug prints
-    #     print("DEBUG - Vendors found:", vendor_queryset.count())
-    #     print("DEBUG - Cuisine:", selected_cuisine)
-    #     print("DEBUG - Query:", query)
-
-    #     context['query'] = query
-    #     context['vendor_results'] = vendor_queryset.distinct()
-    #     context['selected_cuisine'] = selected_cuisine
-    #     context['selected_price'] = selected_price
-    #     context['selected_rating'] = selected_rating
-
-    #     print(f"[DEBUG] Vendors: {vendor_queryset.count()} | Cuisine: {selected_cuisine} | Price: {selected_price} | Rating: {selected_rating}")
-
-    #     return context
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
@@ -92,6 +57,9 @@ class SearchResultsView(TemplateView):
             vendor_queryset = vendor_queryset.filter(average_rating__gte=selected_rating)
 
         vendor_queryset = vendor_queryset.distinct()
+         
+         # Add today's reference date for "New" badge logic
+        context['today'] = timezone.now() - timedelta(days=7)
 
         # Debug print
         print("DEBUG - Vendors found:", vendor_queryset.count())
@@ -115,7 +83,7 @@ class CustomLoginView(LoginView):
     def get_success_url(self):
         user = self.request.user
         if user.is_vendor:
-            return reverse_lazy('vendor-fooditem-list')
+            return reverse_lazy('vendor-fooditem-create')
         elif user.is_tourist:
             return reverse_lazy('my-bookings')
         return reverse_lazy('home')
@@ -124,6 +92,7 @@ class RegisterView(CreateView):
     model = User
     form_class = UserRegisterForm
     template_name = 'auth/register.html'
+    success_url = reverse_lazy('thank-you')  # Needed for CreateView base
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -132,11 +101,23 @@ class RegisterView(CreateView):
             kwargs['initial_role'] = role
         return kwargs
 
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        role = form.cleaned_data.get('role', 'tourist')
-        return redirect(f"{reverse_lazy('thank-you')}?role={role}")
+        def form_valid(self, form):
+            response = super().form_valid(form)
+            user = self.object
     
+            # 🔐 Set role flags
+            role = form.cleaned_data.get('role', 'tourist')
+            if role == 'vendor':
+                user.is_vendor = True
+            elif role == 'tourist':
+                user.is_tourist = True
+            user.save()
+    
+            #  Log in after saving
+            login(self.request, user)
+    
+            return redirect(f"{reverse_lazy('thank-you')}?role={role}")
+
 
 # Thank you page after registration
 class ThankYouView(TemplateView):
