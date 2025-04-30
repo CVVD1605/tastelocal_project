@@ -1,5 +1,5 @@
 from django import forms
-from .models import VendorProfile
+from .models import VendorProfile, Booking
 from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
 
@@ -44,3 +44,40 @@ class UserRegisterForm(forms.ModelForm):
             user.save()
 
         return user
+
+class BookingForm(forms.ModelForm):
+    class Meta:
+        model = Booking
+        fields = ['booking_date', 'booking_time', 'number_of_people', 'special_request']
+        widgets = {
+            'booking_date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-control'
+            }),
+            'booking_time': forms.TimeInput(attrs={
+                'type': 'time',
+                'class': 'form-control'
+            }),
+            'number_of_people': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 1
+            }),
+            'special_request': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Any dietary needs or requests?'
+            }),
+        }
+
+User = get_user_model()
+
+class EditProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name']  # adjust as needed
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+        }

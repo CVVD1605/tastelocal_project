@@ -1,16 +1,74 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load widget_tweaks %}
+
 
 {% block content %}
 <div class="container mt-5">
-    <h2>Book a Culinary Experience</h2>
+  <div class="row">
 
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
+    <!-- Sidebar -->
+    <div class="col-md-3 mb-4">
+      <div class="list-group">
+        <a href="#" class="list-group-item list-group-item-action active">Home</a>
+        <a href="{% url 'search-results' %}?cuisine=Local" class="list-group-item list-group-item-action">Cuisine</a>
+        <a href="{% url 'search-results' %}?rating=4" class="list-group-item list-group-item-action">Rating</a>
+        <a href="{% url 'search-results' %}?price=10" class="list-group-item list-group-item-action">Price</a>
+      </div>
+    </div>
 
-        <button type="submit" class="btn btn-success">Confirm Booking</button>
-        <a href="{% url 'vendor-list' %}" class="btn btn-secondary">Cancel</a>
-    </form>
+    <!-- Booking Form -->
+    <div class="col-md-9">
+      <h2 class="mb-4">Booking</h2>
+
+      <div class="card p-4 shadow-sm">
+        <h5 class="mb-3"><strong>Vendor:</strong> {{ view.object.vendor.business_name }}</h5>
+
+        {% if form.errors %}
+        <div class="alert alert-danger">
+          <strong>Please fix the following errors:</strong>
+          <ul>
+            {% for field in form %}
+              {% for error in field.errors %}
+                <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+              {% endfor %}
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+
+        <form method="post">
+          {% csrf_token %}
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Booking date</label>
+              {{ form.booking_date|add_class:"form-control" }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Booking time</label>
+              {{ form.booking_time|add_class:"form-control" }}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Number of Guests</label>
+            {{ form.number_of_people|add_class:"form-control" }}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Special Request</label>
+            {{ form.special_request|add_class:"form-control" }}
+          </div>
+
+          <div class="text-center">
+            <button type="submit" class="btn btn-primary px-5">Reserve</button>
+            <a href="{% url 'vendor-list' %}" class="btn btn-secondary ms-2">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
 </div>
 {% endblock %}

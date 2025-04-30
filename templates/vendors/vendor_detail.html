@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load widget_tweaks %}
 
 {% block content %}
 <div class="container mt-5">
@@ -28,6 +29,6 @@
     </div>
 
     <hr>
-    <a href="{% url 'booking-create' vendor.pk %}" class="btn btn-success">Book Now</a>
+    <a href="{% url 'vendor-booking' vendor.pk %}" class="btn btn-success">Book Now</a>
 </div>
 {% endblock %}

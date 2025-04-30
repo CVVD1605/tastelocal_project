@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.conf import settings
+from django import forms
 
 class CustomUser(AbstractUser):
     is_tourist = models.BooleanField(default=False)
@@ -54,6 +55,9 @@ class FoodItem(models.Model):
     image = models.ImageField(upload_to='food_items/', blank=True, null=True)
     objects = models.Manager()  # Ensure a default manager is defined
     created_at = models.DateTimeField(auto_now_add=True)
+
+      # Ensure a default manager is defined
+    objects = models.Manager()
     def __str__(self):
         return str(self.name)
     
@@ -66,6 +70,13 @@ class Booking(models.Model):
     special_request = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('confirmed', 'Confirmed'),
+        ('cancelled', 'Cancelled'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    
     def __str__(self):
         return f"Booking by {self.tourist.username} at {self.vendor.business_name}"
     
@@ -74,3 +85,27 @@ class Cuisine(models.Model):
 
     def __str__(self):
         return self.name
+    
+# NEW Review Model
+class Review(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    vendor = models.ForeignKey(VendorProfile, on_delete=models.CASCADE)
+    rating = models.IntegerField(choices=[(i, str(i)) for i in range(1, 6)])
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'vendor')  # Prevent duplicate reviews
+
+    def __str__(self):
+        return f"{self.user.username} review for {self.vendor.business_name}"
+    
+class ReviewForm(forms.ModelForm):
+    class Meta:
+        model = Review
+        fields = ['rating', 'comment']
+        widgets = {
+            'rating': forms.Select(choices=[(i, str(i)) for i in range(1, 6)], attrs={'class': 'form-select'}),
+            'comment': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+

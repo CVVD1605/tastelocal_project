@@ -1,37 +1,57 @@
 {% extends 'base.html' %}
-{% load static %}
-
 {% block content %}
-<div class="container mt-4">
-  <h2>Welcome, {{ user.username }}</h2>
-  <p>Your Bookings</p>
+<div class="container mt-5">
+  <h2 class="mb-4">My Bookings</h2>
 
-  <div class="row">
-    {% for booking in bookings %}
-    <div class="col-md-6 mb-4">
-      <div class="card shadow-sm">
-        <div class="row g-0">
-          <div class="col-md-4">
-            {% if booking.vendor.photo_url %}
-              <img src="{{ booking.vendor.photo_url.url }}" class="img-fluid rounded-start" alt="{{ booking.vendor.business_name }}">
-            {% else %}
-              <img src="https://via.placeholder.com/150" class="img-fluid rounded-start" alt="No image">
-            {% endif %}
-          </div>
-          <div class="col-md-8">
-            <div class="card-body">
-              <h5 class="card-title">{{ booking.vendor.business_name }}</h5>
-              <p class="card-text"><strong>Date:</strong> {{ booking.booking_date }}</p>
-              <p class="card-text"><strong>Status:</strong> {{ booking.status }}</p>
-              <a href="#" class="btn btn-outline-primary btn-sm">Edit</a> <!-- optional -->
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    {% empty %}
-      <p class="text-muted">You have no bookings yet.</p>
-    {% endfor %}
-  </div>
+  {% if upcoming_bookings %}
+    <h5 class="mt-4">Upcoming Bookings</h5>
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Vendor</th><th>Date</th><th>Time</th><th>Guests</th><th>Status</th><th>Note</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for booking in upcoming_bookings %}
+        <tr>
+          <td>{{ booking.vendor.business_name }}</td>
+          <td>{{ booking.booking_date }}</td>
+          <td>{{ booking.booking_time }}</td>
+          <td>{{ booking.number_of_people }}</td>
+          <td><span class="badge bg-secondary">{{ booking.status|capfirst }}</span></td>
+          <td>{{ booking.special_request|default:"—" }}</td>
+          <td>
+            <a href="{% url 'booking-cancel' booking.id %}" class="btn btn-sm btn-danger">Cancel</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="text-muted">No upcoming bookings.</p>
+  {% endif %}
+
+  {% if past_bookings %}
+    <h5 class="mt-5">Past Bookings</h5>
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Vendor</th><th>Date</th><th>Time</th><th>Guests</th><th>Status</th><th>Note</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for booking in past_bookings %}
+        <tr>
+          <td>{{ booking.vendor.business_name }}</td>
+          <td>{{ booking.booking_date }}</td>
+          <td>{{ booking.booking_time }}</td>
+          <td>{{ booking.number_of_people }}</td>
+          <td><span class="badge bg-light text-dark">{{ booking.status|capfirst }}</span></td>
+          <td>{{ booking.special_request|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
 </div>
 {% endblock %}
