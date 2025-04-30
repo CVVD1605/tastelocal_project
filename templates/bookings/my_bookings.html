@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>Welcome, {{ user.username }}</h2>
+  <p>Your Bookings</p>
+
+  <div class="row">
+    {% for booking in bookings %}
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm">
+        <div class="row g-0">
+          <div class="col-md-4">
+            {% if booking.vendor.photo_url %}
+              <img src="{{ booking.vendor.photo_url.url }}" class="img-fluid rounded-start" alt="{{ booking.vendor.business_name }}">
+            {% else %}
+              <img src="https://via.placeholder.com/150" class="img-fluid rounded-start" alt="No image">
+            {% endif %}
+          </div>
+          <div class="col-md-8">
+            <div class="card-body">
+              <h5 class="card-title">{{ booking.vendor.business_name }}</h5>
+              <p class="card-text"><strong>Date:</strong> {{ booking.booking_date }}</p>
+              <p class="card-text"><strong>Status:</strong> {{ booking.status }}</p>
+              <a href="#" class="btn btn-outline-primary btn-sm">Edit</a> <!-- optional -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+      <p class="text-muted">You have no bookings yet.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -8,12 +8,22 @@ from .views import (
     VendorListView,
     VendorDetailView,
     VendorProfileCreateView,
-    BookingCreateView
+    BookingCreateView,
+    TouristBookingListView,
+    RegisterView,
+    CustomLoginView,
+    ThankYouView
 )
+from django.contrib.auth.views import LogoutView
 
 urlpatterns = [
     # Home page
     path('', HomeView.as_view(), name='home'),
+    # Authentication
+    path('login/', CustomLoginView.as_view(), name='login'),
+    path('logout/', LogoutView.as_view(next_page='home'), name='logout'),
+    path('register/', RegisterView.as_view(), name='register'),
+    path('thank-you/', ThankYouView.as_view(), name='thank-you'),
     # Vendor Food Management
     path('vendor/food-items/', VendorFoodItemListView.as_view(), name='vendor-fooditem-list'),
     path('vendor/food-items/add/', VendorFoodItemCreateView.as_view(), name='vendor-fooditem-add'),
@@ -23,5 +33,7 @@ urlpatterns = [
     path('vendors/', VendorListView.as_view(), name='vendor-list'),
     path('vendors/<int:pk>/', VendorDetailView.as_view(), name='vendor-detail'),
     path('vendor/setup/', VendorProfileCreateView.as_view(), name='vendor-setup'),
-    path('vendors/<int:pk>/book/', BookingCreateView.as_view(), name='booking-create')
+    path('vendors/<int:pk>/book/', BookingCreateView.as_view(), name='booking-create'),
+    # Tourist Booking Management
+    path('my-bookings/', TouristBookingListView.as_view(), name='my-bookings')
 ]

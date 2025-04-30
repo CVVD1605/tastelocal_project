@@ -1,46 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  {% load static %} 
+
   <meta charset="UTF-8">
   <title>TasteLocal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
 
-<!-- 🔹 Navbar -->
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+  <!-- 🔷 Navbar -->
 <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
   <div class="container">
-    <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
-        <img src="/media/images/tastelocal_logo.png" alt="TasteLocal" height="40" class="me-2">
-        <span class="fw-bold">TasteLocal</span>
-      </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown">
+    <img src="{% static 'images/tastelocal_logo.png' %}" alt="TasteLocal Logo" height="40">
+    <a class="navbar-brand fw-bold" href="{% url 'home' %}">TasteLocal</a>
+    </a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
       <span class="navbar-toggler-icon"></span>
     </button>
-    <div class="collapse navbar-collapse justify-content-end" id="navbarNavDropdown">
+
+    <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
       <ul class="navbar-nav">
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'vendor-list' %}">Discover</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link disabled" href="#">Reviews</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="#">Login/Register</a>
+        <li class="nav-item"><a class="nav-link" href="#">Discover</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Reviews</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Join</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{% url 'register' %}?role=tourist">Join as Tourist</a></li>
+            <li><a class="dropdown-item" href="{% url 'register' %}?role=vendor">Join as Vendor</a></li>
+          </ul>
         </li>
       </ul>
     </div>
   </div>
 </nav>
 
-<!-- 🔹 Dynamic Page Content -->
-<div class="container">
-  {% block content %}
-  {% endblock %}
-</div>
 
-<!-- 🔹 Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- 🔷 Main Page Content -->
+  <main class="flex-grow-1">
+    {% block content %}
+    {% endblock %}
+  </main>
+
+  <!-- 🔷 Footer -->
+  <footer class="bg-light text-center text-muted py-3 mt-auto">
+    <div class="container">
+      <small>
+        <a href="#">About Us</a> | 
+        <a href="#">Help/FAQ</a> | 
+        <a href="#">Site Map</a> | 
+        <a href="#">Privacy Statement</a> | 
+        <a href="#">Contact Us</a>
+      </small>
+    </div>
+  </footer>
+
+  <!-- Bootstrap JS (optional) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

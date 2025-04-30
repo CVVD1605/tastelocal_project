@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div class="container mt-5 text-center">
+  <h2 class="mb-3">Thank You for Registering!</h2>
+  <p class="lead">
+    Welcome to TasteLocal, {{ role|title }}!<br>
+    You can now <a href="{% url 'login' %}">log in</a> to access your dashboard.
+  </p>
+</div>
+{% endblock %}

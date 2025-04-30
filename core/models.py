@@ -35,7 +35,7 @@ class VendorProfile(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.business_name
+        return str(self.business_name)
 
 class FoodItem(models.Model):
     vendor = models.ForeignKey(VendorProfile, on_delete=models.CASCADE, related_name='food_items')
