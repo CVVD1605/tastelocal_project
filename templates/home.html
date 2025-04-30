@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5 text-center">
+  <h1 class="mb-4">Search for food experience</h1>
+
+  <form method="GET" action="{% url 'vendor-list' %}">
+    <input type="text" name="search" class="form-control w-50 d-inline" placeholder="Search" />
+    <button type="submit" class="btn btn-outline-primary">🔍</button>
+  </form>
+
+  <div class="mt-5">
+    <h4>Explore by</h4>
+    <div class="d-flex justify-content-center gap-3 mt-3">
+      <a href="#" class="btn btn-info">Cuisine</a>
+      <a href="#" class="btn btn-info">Nearby Me</a>
+      <a href="#" class="btn btn-info">Top Rated</a>
+      <a href="#" class="btn btn-info">New Listings</a>
+    </div>
+  </div>
+
+  <div class="mt-5">
+    <h4>Featured Vendors</h4>
+    <div class="row mt-3">
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-img-top bg-secondary" style="height:150px;"></div>
+          <div class="card-body">
+            <h5 class="card-title">Vendor A</h5>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-img-top bg-secondary" style="height:150px;"></div>
+          <div class="card-body">
+            <h5 class="card-title">Vendor B</h5>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-img-top bg-secondary" style="height:150px;"></div>
+          <div class="card-body">
+            <h5 class="card-title">Vendor C</h5>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-5">
+    <h4>Why TasteLocal?</h4>
+    <p>Authentic food experiences. <br> Support small local vendors. <br> Curated, trusted reviews.</p>
+    <div class="d-flex justify-content-center gap-4 mt-3">
+      <a href="#" class="btn btn-danger">Join as Tourist</a>
+      <a href="#" class="btn btn-danger">Join as Vendor</a>
+    </div>
+  </div>
+
+  <footer class="mt-5">
+    <hr>
+    <div class="d-flex justify-content-center gap-3">
+      <a href="#">About Us</a>
+      <a href="#">Help/FAQ</a>
+      <a href="#">Site Map</a>
+      <a href="#">Privacy Statement</a>
+      <a href="#">Contact Us</a>
+    </div>
+  </footer>
+</div>
+{% endblock %}

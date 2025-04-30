@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">My Food Items</h2>
+
+    <div class="mb-3">
+        <a href="{% url 'vendor-fooditem-add' %}" class="btn btn-primary">Add New Food Item</a>
+    </div>
+
+    {% if fooditems %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Item Name</th>
+                    <th>Description</th>
+                    <th>Price</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in fooditems %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.description }}</td>
+                    <td>${{ item.price }}</td>
+                    <td>
+                        <a href="{% url 'vendor-fooditem-edit' item.pk %}" class="btn btn-sm btn-warning">Edit</a>
+                        <a href="{% url 'vendor-fooditem-delete' item.pk %}" class="btn btn-sm btn-danger">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No food items found. Start by adding one!</p>
+    {% endif %}
+</div>
+{% endblock %}

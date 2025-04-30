@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Explore Local Food Vendors</h2>
+
+    <div class="row">
+        {% for vendor in vendors %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                {% if vendor.profile_picture %}
+                    <img src="{{ vendor.profile_picture.url }}" class="card-img-top" alt="{{ vendor.business_name }}">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ vendor.business_name }}</h5>
+                    <p class="card-text">{{ vendor.address|truncatechars:100 }}</p>
+                    <a href="{% url 'vendor-detail' vendor.pk %}" class="btn btn-primary">View</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p>No vendors found.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
