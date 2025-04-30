@@ -12,7 +12,8 @@ from .views import (
     TouristBookingListView,
     RegisterView,
     CustomLoginView,
-    ThankYouView
+    ThankYouView,
+    SearchResultsView
 )
 from django.contrib.auth.views import LogoutView
 
@@ -35,5 +36,7 @@ urlpatterns = [
     path('vendor/setup/', VendorProfileCreateView.as_view(), name='vendor-setup'),
     path('vendors/<int:pk>/book/', BookingCreateView.as_view(), name='booking-create'),
     # Tourist Booking Management
-    path('my-bookings/', TouristBookingListView.as_view(), name='my-bookings')
+    path('my-bookings/', TouristBookingListView.as_view(), name='my-bookings'),
+    # Search functionalit
+    path('search/', SearchResultsView.as_view(), name='search-results')
 ]

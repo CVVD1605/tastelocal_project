@@ -8,8 +8,7 @@ User = get_user_model()
 class VendorProfileForm(forms.ModelForm):
     class Meta:
         model = VendorProfile
-        fields = ['business_name', 'description', 'category', 'location_text', 'latitude', 'longitude', 'phone', 'photo_url']
-
+        fields = ['business_name', 'description', 'category', 'location_text', 'latitude', 'longitude', 'phone', 'photo_url', 'cuisine']
 
 class UserRegisterForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput)

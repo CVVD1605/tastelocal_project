@@ -1,6 +1,6 @@
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView, TemplateView
 from django.urls import reverse_lazy
-from .models import FoodItem, VendorProfile, Booking
+from .models import FoodItem, VendorProfile, Booking, Cuisine
 from .forms import VendorProfileForm, UserRegisterForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
@@ -10,12 +10,102 @@ from django.shortcuts import redirect
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.views import LoginView
 from django.contrib.auth import get_user_model
+from django.db.models import Q  # Ensure Q is imported for query composition
 
 User = get_user_model()
 
 # Home page view
 class HomeView(TemplateView):
     template_name = 'home.html'
+
+# Search functionality
+class SearchResultsView(TemplateView):
+    template_name = 'search/results.html'
+
+    # def get_context_data(self, **kwargs):
+    #     context = super().get_context_data(**kwargs)
+
+    #     query = self.request.GET.get('search', '')
+    #     selected_cuisine = self.request.GET.get('cuisine')
+    #     selected_price = self.request.GET.get('price')
+    #     selected_rating = self.request.GET.get('rating')
+
+    #     # vendor_queryset = VendorProfile.objects.all()
+    #     vendor_queryset = vendor_queryset.prefetch_related('food_items')
+
+
+    #     if query:
+    #         vendor_queryset = vendor_queryset.filter(
+    #             Q(business_name__icontains=query) |
+    #             Q(description__icontains=query)
+    #         )
+    #     if selected_cuisine:
+    #         vendor_queryset = vendor_queryset.filter(cuisine__iexact=selected_cuisine)
+
+    #     if selected_cuisine:
+    #         vendor_queryset = vendor_queryset.filter(cuisine__iexact=selected_cuisine)
+
+    #     if selected_price:
+    #         vendor_queryset = vendor_queryset.filter(food_items__price__lte=selected_price)
+
+    #     if selected_rating:
+    #         vendor_queryset = vendor_queryset.filter(average_rating__gte=selected_rating)
+
+    #     #  Add debug prints
+    #     print("DEBUG - Vendors found:", vendor_queryset.count())
+    #     print("DEBUG - Cuisine:", selected_cuisine)
+    #     print("DEBUG - Query:", query)
+
+    #     context['query'] = query
+    #     context['vendor_results'] = vendor_queryset.distinct()
+    #     context['selected_cuisine'] = selected_cuisine
+    #     context['selected_price'] = selected_price
+    #     context['selected_rating'] = selected_rating
+
+    #     print(f"[DEBUG] Vendors: {vendor_queryset.count()} | Cuisine: {selected_cuisine} | Price: {selected_price} | Rating: {selected_rating}")
+
+    #     return context
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        query = self.request.GET.get('search', '')
+        selected_cuisine = self.request.GET.get('cuisine')
+        selected_price = self.request.GET.get('price')
+        selected_rating = self.request.GET.get('rating')
+
+        # Always initialize base queryset
+        vendor_queryset = VendorProfile.objects.prefetch_related('food_items').all()
+
+        if query:
+            vendor_queryset = vendor_queryset.filter(
+                Q(business_name__icontains=query) |
+                Q(description__icontains=query)
+            )
+
+        if selected_cuisine:
+            vendor_queryset = vendor_queryset.filter(cuisine__iexact=selected_cuisine)
+
+        if selected_price:
+            vendor_queryset = vendor_queryset.filter(food_items__price__lte=selected_price)
+
+        if selected_rating:
+            vendor_queryset = vendor_queryset.filter(average_rating__gte=selected_rating)
+
+        vendor_queryset = vendor_queryset.distinct()
+
+        # Debug print
+        print("DEBUG - Vendors found:", vendor_queryset.count())
+        print("DEBUG - Cuisine:", selected_cuisine)
+        print("DEBUG - Query:", query)
+
+        context['query'] = query
+        context['vendor_results'] = vendor_queryset
+        context['selected_cuisine'] = selected_cuisine
+        context['selected_price'] = selected_price
+        context['selected_rating'] = selected_rating
+
+        return context
+
 
 # Register view for new users
 class CustomLoginView(LoginView):

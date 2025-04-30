@@ -22,6 +22,14 @@ class TouristProfile(models.Model):
 
 # NEW VendorProfile
 class VendorProfile(models.Model):
+    CUISINE_CHOICES = [
+        ('Thai', 'Thai'),
+        ('Japanese', 'Japanese'),
+        ('Indian', 'Indian'),
+        ('Italian', 'Italian'),
+        ('Local', 'Local'),
+    ]
+
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='vendor_profile')
     business_name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
@@ -32,6 +40,7 @@ class VendorProfile(models.Model):
     phone = models.CharField(max_length=20, blank=True)
     photo_url = models.URLField(blank=True, null=True)
     average_rating = models.FloatField(default=0.0)
+    cuisine = models.CharField(max_length=50, choices=CUISINE_CHOICES, blank=True) 
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -59,3 +68,9 @@ class Booking(models.Model):
 
     def __str__(self):
         return f"Booking by {self.tourist.username} at {self.vendor.business_name}"
+    
+class Cuisine(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
