@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-4">Received Bookings</h2>
+
+  {% if bookings %}
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Tourist</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Guests</th>
+          <th>Request</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for booking in bookings %}
+        <tr>
+          <td>{{ booking.tourist.username }}</td>
+          <td>{{ booking.booking_date }}</td>
+          <td>{{ booking.booking_time }}</td>
+          <td>{{ booking.number_of_people }}</td>
+          <td>{{ booking.special_request|default:"—" }}</td>
+          <td>
+            <span class="badge 
+              {% if booking.status == 'pending' %} bg-warning
+              {% elif booking.status == 'confirmed' %} bg-success
+              {% elif booking.status == 'declined' %} bg-danger
+              {% else %} bg-secondary
+              {% endif %}
+            ">
+              {{ booking.status|capfirst }}
+            </span>
+          </td>
+          <td>
+            {% if booking.status == 'pending' %}
+              <a href="{% url 'vendor-booking-update' booking.pk %}?status=confirmed" class="btn btn-sm btn-outline-success">Accept</a>
+              <a href="{% url 'vendor-booking-update' booking.pk %}?status=declined" class="btn btn-sm btn-outline-danger">Decline</a>
+            {% else %}
+              <small class="text-muted">—</small>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="text-muted">No bookings yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

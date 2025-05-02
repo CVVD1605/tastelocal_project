@@ -29,6 +29,7 @@
                   <strong>Status:</strong> <span class="badge bg-secondary">{{ booking.status|capfirst }}</span>
                 </p>
                 <a href="{% url 'booking-update' booking.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                <a href="{% url 'submit-review' booking.vendor.id %}" class="btn btn-sm btn-outline-primary">Review</a>
               </div>
             </div>
           </div>
