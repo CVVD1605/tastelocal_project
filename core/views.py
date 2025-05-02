@@ -1,14 +1,14 @@
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView, TemplateView
 from django.urls import reverse, reverse_lazy
-from .models import FoodItem, VendorProfile, Booking, Cuisine, Review
-from .forms import VendorProfileForm, UserRegisterForm, EditProfileForm, ReviewForm
+from .models import FoodItem, VendorProfile, Booking, Cuisine, Review, TouristProfile
+from .forms import VendorProfileForm, UserRegisterForm, EditProfileForm, ReviewForm, TouristAccountForm, TouristProfileForm, UserUpdateForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404, render
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.views import LoginView, PasswordChangeView
 from django.contrib.auth import get_user_model
@@ -76,20 +76,23 @@ class SearchResultsView(TemplateView):
 
         return context
 
-
 # Register view for new users
 class CustomLoginView(LoginView):
-    template_name = 'auth/login.html'
-    authentication_form = AuthenticationForm
+    template_name = 'registration/login.html'
 
     def get_success_url(self):
         user = self.request.user
         if user.is_vendor:
-            return reverse_lazy('vendor-fooditem-create')
+            return reverse_lazy('vendor-fooditem-list')
         elif user.is_tourist:
-            return reverse_lazy('my-bookings')
+            return reverse_lazy('tourist-dashboard')
         return reverse_lazy('home')
 
+# Custom logout view
+def custom_logout_view(request):
+    logout(request)
+    messages.success(request, "You have been logged out.")
+    return redirect('home')  # or use reverse_lazy('home')
 # Custom registration view
 class RegisterView(CreateView):
     model = User
@@ -201,6 +204,76 @@ class VendorProfileCreateView(CreateView):
         form.instance.user = self.request.user
         return super().form_valid(form)
     
+# Dashboard for Tourist
+class TouristDashboardView(LoginRequiredMixin, TemplateView):
+    template_name = 'tourists/dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        context['bookings'] = Booking.objects.filter(tourist=user).select_related('vendor').order_by('-booking_date')
+        return context
+
+# Edit Tourist Profile
+@login_required
+def edit_tourist_profile(request):
+    user = request.user
+    profile, created = TouristProfile.objects.get_or_create(user=user)
+
+    if request.method == 'POST':
+        user_form = EditProfileForm(request.POST, instance=user)
+        profile_form = TouristProfileForm(request.POST, request.FILES, instance=profile)
+
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            profile_form.save()
+            messages.success(request, 'Your profile has been updated.')
+            return redirect('tourist-dashboard')
+        else:
+            messages.error(request, 'Please fix the errors below.')
+    else:
+        user_form = EditProfileForm(instance=user)
+        profile_form = TouristProfileForm(instance=profile)
+
+    return render(request, 'tourists/edit_profile.html', {
+        'user_form': user_form,
+        'profile_form': profile_form,
+    })
+
+# For Tourists – to see their own bookings (already exists):
+class TouristBookingListView(LoginRequiredMixin, ListView):
+    model = Booking
+    template_name = 'bookings/my_bookings.html'
+    context_object_name = 'bookings'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        now = timezone.now().date()
+
+        context['upcoming_bookings'] = Booking.objects.filter(
+            tourist=self.request.user, booking_date__gte=now
+        ).order_by('booking_date')
+
+        context['past_bookings'] = Booking.objects.filter(
+            tourist=self.request.user, booking_date__lt=now
+        ).order_by('-booking_date')
+
+        return context
+
+# Password Change for Tourist
+class TouristPasswordChangeView(PasswordChangeView):
+    template_name = 'registration/password_change_form.html'
+    success_url = reverse_lazy('tourist-dashboard')  
+# # Update an existing booking  a new booking
+class BookingUpdateView(LoginRequiredMixin, UpdateView):
+    model = Booking
+    fields = ['booking_date', 'booking_time', 'number_of_people', 'special_request']
+    template_name = 'bookings/booking_form.html'  # reuse existing form
+    success_url = reverse_lazy('tourist-dashboard')
+
+    def get_queryset(self):
+        return Booking.objects.filter(tourist=self.request.user)
+
 # Booking Creation
 class BookingCreateView(LoginRequiredMixin, CreateView):
     model = Booking
@@ -214,45 +287,6 @@ class BookingCreateView(LoginRequiredMixin, CreateView):
 
     def get_success_url(self):
         return reverse_lazy('my-bookings')  # we'll build this next
-
-# Dashboard for Tourist
-class TouristDashboardView(LoginRequiredMixin, TemplateView):
-    template_name = 'tourists/dashboard.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        user = self.request.user
-        context['bookings'] = Booking.objects.filter(tourist=user).select_related('vendor').order_by('-booking_date')
-        return context
-    
-# List all bookings for a Tourist
-class TouristBookingListView(LoginRequiredMixin, ListView):
-    model = Booking
-    template_name = 'bookings/my_bookings.html'
-    context_object_name = 'bookings'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        today = timezone.now().date()
-        all_bookings = Booking.objects.filter(tourist=self.request.user).order_by('-booking_date', '-booking_time')
-
-        context['upcoming_bookings'] = all_bookings.filter(booking_date__gte=today)
-        context['past_bookings'] = all_bookings.filter(booking_date__lt=today)
-        return context
-
-# Password Change for Tourist
-class TouristPasswordChangeView(PasswordChangeView):
-    template_name = 'registration/password_change_form.html'
-    success_url = reverse_lazy('tourist-dashboard')  
-# Edit Profile for Tourist
-class BookingUpdateView(LoginRequiredMixin, UpdateView):
-    model = Booking
-    fields = ['booking_date', 'booking_time', 'number_of_people', 'special_request']
-    template_name = 'bookings/booking_form.html'  # reuse existing form
-    success_url = reverse_lazy('tourist-dashboard')
-
-    def get_queryset(self):
-        return Booking.objects.filter(tourist=self.request.user)
 
 # Cancel a booking
 class BookingCancelView(LoginRequiredMixin, TemplateView):
@@ -293,3 +327,46 @@ class ReviewCreateView(LoginRequiredMixin, CreateView):
 
     def get_success_url(self):
         return reverse('vendor-detail', kwargs={'pk': self.vendor.pk})
+    
+class SubmitReviewView(LoginRequiredMixin, CreateView):
+    model = Review
+    form_class = ReviewForm
+    template_name = 'reviews/submit_review.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.vendor = get_object_or_404(VendorProfile, pk=self.kwargs['vendor_id'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        form.instance.vendor = self.vendor
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('vendor-detail', kwargs={'pk': self.vendor.pk})
+
+# For Vendors – to see incoming bookings for their business:
+class VendorBookingListView(LoginRequiredMixin, ListView):
+    model = Booking
+    template_name = 'vendors/booking_list.html'
+    context_object_name = 'bookings'
+
+    def get_queryset(self):
+        return Booking.objects.filter(
+            vendor=self.request.user.vendor_profile
+        ).select_related('tourist').order_by('-booking_date')
+
+# For Vendors – to accept/decline individual bookings:
+class VendorBookingUpdateView(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        booking = get_object_or_404(Booking, pk=pk, vendor=request.user.vendor_profile)
+        new_status = request.GET.get('status')
+
+        if new_status in ['confirmed', 'declined'] and booking.status == 'pending':
+            booking.status = new_status
+            booking.save()
+            messages.success(request, f"Booking has been {new_status}.")
+        else:
+            messages.warning(request, "Invalid or duplicate action.")
+
+        return redirect('vendor-booking-list')

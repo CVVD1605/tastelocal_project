@@ -1,9 +1,10 @@
 from django import forms
-from .models import VendorProfile, Booking
+from .models import VendorProfile, Booking, Review, TouristProfile
 from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
+CustomUser = get_user_model()
 
 class VendorProfileForm(forms.ModelForm):
     class Meta:
@@ -69,15 +70,46 @@ class BookingForm(forms.ModelForm):
             }),
         }
 
-User = get_user_model()
-
 class EditProfileForm(forms.ModelForm):
     class Meta:
-        model = User
-        fields = ['username', 'email', 'first_name', 'last_name']  # adjust as needed
+        model = CustomUser
+        fields = ['username', 'email', 'first_name', 'last_name']
         widgets = {
             'username': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+class ReviewForm(forms.ModelForm):
+    class Meta:
+        model = Review
+        fields = ['rating', 'comment']
+        widgets = {
+            'rating': forms.RadioSelect(),
+            'comment': forms.Textarea(attrs={'rows': 3}),
+        }
+
+class TouristProfileForm(forms.ModelForm):
+    class Meta:
+        model = TouristProfile
+        fields = ['full_name', 'phone_number', 'profile_picture']
+        widgets = {
+            'full_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'profile_picture': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+        }
+
+class TouristAccountForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['username', 'email']
+
+class UserUpdateForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['username', 'email']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
         }

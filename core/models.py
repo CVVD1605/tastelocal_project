@@ -74,6 +74,7 @@ class Booking(models.Model):
         ('pending', 'Pending'),
         ('confirmed', 'Confirmed'),
         ('cancelled', 'Cancelled'),
+        ('declined', 'Declined'),
     ]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     
@@ -88,24 +89,13 @@ class Cuisine(models.Model):
     
 # NEW Review Model
 class Review(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    vendor = models.ForeignKey(VendorProfile, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reviews')
+    vendor = models.ForeignKey(VendorProfile, on_delete=models.CASCADE, related_name='reviews')
     rating = models.IntegerField(choices=[(i, str(i)) for i in range(1, 6)])
-    comment = models.TextField()
+    comment = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        unique_together = ('user', 'vendor')  # Prevent duplicate reviews
-
     def __str__(self):
-        return f"{self.user.username} review for {self.vendor.business_name}"
-    
-class ReviewForm(forms.ModelForm):
-    class Meta:
-        model = Review
-        fields = ['rating', 'comment']
-        widgets = {
-            'rating': forms.Select(choices=[(i, str(i)) for i in range(1, 6)], attrs={'class': 'form-select'}),
-            'comment': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-        }
+        return f"{self.user.username}'s review for {self.vendor.business_name}"
+
 

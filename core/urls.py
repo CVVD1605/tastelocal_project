@@ -19,7 +19,11 @@ from .views import (
     TouristDashboardView,
     BookingUpdateView,
     TouristPasswordChangeView,
-    ReviewCreateView  # Added missing import
+    ReviewCreateView,  
+    SubmitReviewView,
+    edit_tourist_profile,
+    VendorBookingListView,
+    VendorBookingUpdateView
 )
 from django.contrib.auth.views import LogoutView, PasswordChangeDoneView
 
@@ -28,10 +32,10 @@ urlpatterns = [
     path('', HomeView.as_view(), name='home'),
     # Authentication
     path('login/', CustomLoginView.as_view(), name='login'),
-    path('logout/', LogoutView.as_view(next_page='home'), name='logout'),
+    path('logout/', LogoutView.as_view(), name='logout'),
     path('register/', RegisterView.as_view(), name='register'),
     path('thank-you/', ThankYouView.as_view(), name='thank-you'),
-    path('accounts/', include('django.contrib.auth.urls')),
+    #path('accounts/', include('django.contrib.auth.urls')),
     path('accounts/password_change/',TouristPasswordChangeView.as_view(),name='password_change'),
     path('accounts/password_change/done/',PasswordChangeDoneView.as_view(template_name='registration/password_change_done.html'),name='password_change_done'),
     # Vendor Food Management
@@ -49,11 +53,18 @@ urlpatterns = [
     path('my-bookings/', TouristBookingListView.as_view(), name='my-bookings'),
     path('booking/<int:pk>/cancel/', BookingCancelView.as_view(), name='booking-cancel'),
     path('bookings/<int:pk>/edit/', BookingUpdateView.as_view(), name='booking-update'),
-    path('profile/edit/', EditProfileView.as_view(), name='edit-profile'),
+    path('profile/edit/', edit_tourist_profile, name='edit-profile'),
     path('tourist/dashboard/', TouristDashboardView.as_view(), name='tourist-dashboard'),
+    path('profile/edit/', edit_tourist_profile, name='edit-profile'),
     # Search functionalit
     path('search/', SearchResultsView.as_view(), name='search-results'),
     # Vendor Review
     path('vendors/<int:vendor_id>/review/', ReviewCreateView.as_view(), name='vendor-review'),
+    path('vendors/<int:vendor_id>/review/', SubmitReviewView.as_view(), name='submit-review'),
+    # Vendor Profile
+    path('vendor/bookings/', VendorBookingListView.as_view(), name='vendor-booking-list'),
+    path('vendor/bookings/<int:pk>/update/', VendorBookingUpdateView.as_view(), name='vendor-booking-update'),
+
+
 
 ]
