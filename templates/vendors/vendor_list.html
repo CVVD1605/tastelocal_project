@@ -13,6 +13,15 @@
                 {% endif %}
                 <div class="card-body">
                     <h5 class="card-title">{{ vendor.business_name }}</h5>
+
+                    <p class="card-text">
+                        {% if vendor.average_rating %}
+                            <strong>{{ vendor.average_rating|floatformat:1 }} ★</strong>
+                        {% else %}
+                            <span class="text-muted">No ratings yet</span>
+                        {% endif %}
+                    </p>
+
                     <p class="card-text">{{ vendor.address|truncatechars:100 }}</p>
                     <a href="{% url 'vendor-detail' vendor.pk %}" class="btn btn-primary">View</a>
                 </div>

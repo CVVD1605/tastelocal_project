@@ -1,5 +1,5 @@
 from django import forms
-from .models import VendorProfile, Booking, Review, TouristProfile
+from .models import VendorProfile, Booking, Review, TouristProfile, FoodItem
 from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
 
@@ -9,7 +9,22 @@ CustomUser = get_user_model()
 class VendorProfileForm(forms.ModelForm):
     class Meta:
         model = VendorProfile
-        fields = ['business_name', 'description', 'category', 'location_text', 'latitude', 'longitude', 'phone', 'photo_url', 'cuisine']
+        fields = [
+            'business_name', 'description', 'category',
+            'location_text', 'latitude', 'longitude',
+            'phone', 'photo', 'cuisine'
+        ]
+        widgets = {
+            'business_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control'}),
+            'category': forms.TextInput(attrs={'class': 'form-control'}),
+            'location_text': forms.TextInput(attrs={'class': 'form-control'}),
+            'latitude': forms.NumberInput(attrs={'class': 'form-control'}),
+            'longitude': forms.NumberInput(attrs={'class': 'form-control'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'cuisine': forms.Select(attrs={'class': 'form-control'}),
+        }
 
 class UserRegisterForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput)
@@ -86,8 +101,8 @@ class ReviewForm(forms.ModelForm):
         model = Review
         fields = ['rating', 'comment']
         widgets = {
-            'rating': forms.RadioSelect(),
-            'comment': forms.Textarea(attrs={'rows': 3}),
+            'rating': forms.Select(attrs={'class': 'form-select'}),
+            'comment': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
         }
 
 class TouristProfileForm(forms.ModelForm):
@@ -112,4 +127,15 @@ class UserUpdateForm(forms.ModelForm):
         widgets = {
             'username': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
+        }
+
+class FoodItemForm(forms.ModelForm):
+    class Meta:
+        model = FoodItem
+        fields = ['name', 'description', 'price', 'image']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control'}),
+            'price': forms.NumberInput(attrs={'class': 'form-control'}),
+            'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }

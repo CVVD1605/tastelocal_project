@@ -12,7 +12,7 @@ from django.shortcuts import redirect, get_object_or_404, render
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.views import LoginView, PasswordChangeView
 from django.contrib.auth import get_user_model
-from django.db.models import Q 
+from django.db.models import Q, Avg, Min
 from django.utils import timezone
 from datetime import timedelta
 from django.views import View
@@ -28,7 +28,7 @@ class HomeView(TemplateView):
         context['featured_vendors'] = VendorProfile.objects.prefetch_related('food_items').order_by('-created_at')[:3]
         return context
 
-# Search functionality
+
 class SearchResultsView(TemplateView):
     template_name = 'search/results.html'
 
@@ -40,41 +40,85 @@ class SearchResultsView(TemplateView):
         selected_price = self.request.GET.get('price')
         selected_rating = self.request.GET.get('rating')
 
-        # Always initialize base queryset
-        vendor_queryset = VendorProfile.objects.prefetch_related('food_items').all()
+        # Annotate vendors with average rating and minimum price
+        vendors = VendorProfile.objects.annotate(
+            avg_rating=Avg('reviews__rating'),
+            min_price=Min('food_items__price')
+        )
 
+        # Text search
         if query:
-            vendor_queryset = vendor_queryset.filter(
+            vendors = vendors.filter(
                 Q(business_name__icontains=query) |
                 Q(description__icontains=query)
             )
 
         if selected_cuisine:
-            vendor_queryset = vendor_queryset.filter(cuisine__iexact=selected_cuisine)
+            vendors = vendors.filter(cuisine__iexact=selected_cuisine)
 
         if selected_price:
-            vendor_queryset = vendor_queryset.filter(food_items__price__lte=selected_price)
+            vendors = vendors.filter(min_price__lte=int(selected_price))
 
         if selected_rating:
-            vendor_queryset = vendor_queryset.filter(average_rating__gte=selected_rating)
+            vendors = vendors.filter(avg_rating__gte=int(selected_rating))
 
-        vendor_queryset = vendor_queryset.distinct()
-         
-         # Add today's reference date for "New" badge logic
-        context['today'] = timezone.now() - timedelta(days=7)
-
-        # Debug print
-        print("DEBUG - Vendors found:", vendor_queryset.count())
-        print("DEBUG - Cuisine:", selected_cuisine)
-        print("DEBUG - Query:", query)
-
-        context['query'] = query
-        context['vendor_results'] = vendor_queryset
-        context['selected_cuisine'] = selected_cuisine
-        context['selected_price'] = selected_price
-        context['selected_rating'] = selected_rating
+        context.update({
+            'query': query,
+            'vendor_results': vendors.distinct(),
+            'selected_cuisine': selected_cuisine,
+            'selected_price': selected_price,
+            'selected_rating': selected_rating,
+            'today': timezone.now() - timedelta(days=7),
+        })
 
         return context
+# Search functionality
+# class SearchResultsView(TemplateView):
+#     template_name = 'search/results.html'
+
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+
+#         query = self.request.GET.get('search', '')
+#         selected_cuisine = self.request.GET.get('cuisine')
+#         selected_price = self.request.GET.get('price')
+#         selected_rating = self.request.GET.get('rating')
+
+#         # Always initialize base queryset
+#         vendor_queryset = VendorProfile.objects.prefetch_related('food_items').all()
+
+#         if query:
+#             vendor_queryset = vendor_queryset.filter(
+#                 Q(business_name__icontains=query) |
+#                 Q(description__icontains=query)
+#             )
+
+#         if selected_cuisine:
+#             vendor_queryset = vendor_queryset.filter(cuisine__iexact=selected_cuisine)
+
+#         if selected_price:
+#             vendor_queryset = vendor_queryset.filter(food_items__price__lte=selected_price)
+
+#         if selected_rating:
+#             vendor_queryset = vendor_queryset.filter(average_rating__gte=selected_rating)
+
+#         vendor_queryset = vendor_queryset.distinct()
+         
+#          # Add today's reference date for "New" badge logic
+#         context['today'] = timezone.now() - timedelta(days=7)
+
+#         # Debug print
+#         print("DEBUG - Vendors found:", vendor_queryset.count())
+#         print("DEBUG - Cuisine:", selected_cuisine)
+#         print("DEBUG - Query:", query)
+
+#         context['query'] = query
+#         context['vendor_results'] = vendor_queryset
+#         context['selected_cuisine'] = selected_cuisine
+#         context['selected_price'] = selected_price
+#         context['selected_rating'] = selected_rating
+
+#         return context
 
 # Register view for new users
 class CustomLoginView(LoginView):
@@ -98,30 +142,33 @@ class RegisterView(CreateView):
     model = User
     form_class = UserRegisterForm
     template_name = 'auth/register.html'
-    success_url = reverse_lazy('thank-you')  # Needed for CreateView base
+    success_url = reverse_lazy('thank-you')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['role'] = self.request.GET.get('role', 'tourist')
+        return context
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         role = self.request.GET.get('role')
         if role in ['tourist', 'vendor']:
-            kwargs['initial_role'] = role
+            kwargs['initial_role'] = role  # Optional use if your form shows the role
         return kwargs
 
     def form_valid(self, form):
         response = super().form_valid(form)
         user = self.object
-    
-        # 🔐 Set role flags
-        role = form.cleaned_data.get('role', 'tourist')
+
+        # Fix here: get role from GET, not from form.cleaned_data
+        role = self.request.GET.get('role', 'tourist')
         if role == 'vendor':
             user.is_vendor = True
         elif role == 'tourist':
             user.is_tourist = True
         user.save()
-    
-        #  Log in after saving
+
         login(self.request, user)
-    
         return redirect(f"{reverse_lazy('thank-you')}?role={role}")
 
 # Thank you page after registration
@@ -190,6 +237,7 @@ class VendorDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['food_items'] = FoodItem.objects.filter(vendor=self.object)
+        context['reviews'] = self.object.reviews.select_related('user').order_by('-created_at')
         return context
     
 # Vendor Profile Creation
@@ -203,6 +251,28 @@ class VendorProfileCreateView(CreateView):
     def form_valid(self, form):
         form.instance.user = self.request.user
         return super().form_valid(form)
+
+# Vendor Profile Update
+class VendorProfileUpdateView(LoginRequiredMixin, UpdateView):
+    model = VendorProfile
+    form_class = VendorProfileForm
+    template_name = 'vendors/vendor_profile_form.html'
+
+    def get_object(self):
+        return self.request.user.vendor_profile
+
+    def get_success_url(self):
+        messages.success(self.request, "Profile updated successfully.")
+        return reverse('vendor-dashboard')  # or wherever the vendor lands
+    
+## Vendor Dashboard
+class VendorDashboardView(LoginRequiredMixin, TemplateView):
+    template_name = 'vendors/vendor_dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['vendor'] = self.request.user.vendor_profile
+        return context
     
 # Dashboard for Tourist
 class TouristDashboardView(LoginRequiredMixin, TemplateView):
@@ -211,7 +281,14 @@ class TouristDashboardView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
+
+        # Bookings already present
         context['bookings'] = Booking.objects.filter(tourist=user).select_related('vendor').order_by('-booking_date')
+
+        # Add submitted reviews
+        context['my_reviews'] = Review.objects.filter(user=self.request.user).select_related('vendor').order_by('-created_at')
+
+
         return context
 
 # Edit Tourist Profile
@@ -239,6 +316,18 @@ def edit_tourist_profile(request):
         'user_form': user_form,
         'profile_form': profile_form,
     })
+
+class TouristProfileUpdateView(LoginRequiredMixin, UpdateView):
+    model = TouristProfile
+    form_class = TouristProfileForm
+    template_name = 'tourists/edit_profile.html'
+
+    def get_object(self):
+        return self.request.user.tourist_profile
+
+    def get_success_url(self):
+        messages.success(self.request, "Profile updated successfully.")
+        return reverse('tourist-dashboard')
 
 # For Tourists – to see their own bookings (already exists):
 class TouristBookingListView(LoginRequiredMixin, ListView):
@@ -315,32 +404,25 @@ class ReviewCreateView(LoginRequiredMixin, CreateView):
 
     def dispatch(self, request, *args, **kwargs):
         self.vendor = get_object_or_404(VendorProfile, pk=kwargs['vendor_id'])
+
+        # Prevent multiple reviews
         if Review.objects.filter(user=request.user, vendor=self.vendor).exists():
             messages.warning(request, "You've already reviewed this vendor.")
             return redirect('vendor-detail', pk=self.vendor.pk)
+
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
         form.instance.user = self.request.user
         form.instance.vendor = self.vendor
-        return super().form_valid(form)
-
-    def get_success_url(self):
-        return reverse('vendor-detail', kwargs={'pk': self.vendor.pk})
+        response = super().form_valid(form)
     
-class SubmitReviewView(LoginRequiredMixin, CreateView):
-    model = Review
-    form_class = ReviewForm
-    template_name = 'reviews/submit_review.html'
+        # Update vendor's average rating
+        avg_rating = Review.objects.filter(vendor=self.vendor).aggregate(avg=Avg('rating'))['avg']
+        self.vendor.average_rating = avg_rating or 0.0
+        self.vendor.save()
 
-    def dispatch(self, request, *args, **kwargs):
-        self.vendor = get_object_or_404(VendorProfile, pk=self.kwargs['vendor_id'])
-        return super().dispatch(request, *args, **kwargs)
-
-    def form_valid(self, form):
-        form.instance.user = self.request.user
-        form.instance.vendor = self.vendor
-        return super().form_valid(form)
+        return response
 
     def get_success_url(self):
         return reverse('vendor-detail', kwargs={'pk': self.vendor.pk})

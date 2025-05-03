@@ -40,11 +40,13 @@
             <option value="Indian" {% if selected_cuisine == 'Indian' %}selected{% endif %}>Indian</option>
             <option value="Italian" {% if selected_cuisine == 'Italian' %}selected{% endif %}>Italian</option>
             <option value="Local" {% if selected_cuisine == 'Local' %}selected{% endif %}>Local</option>
+            <option value="Seafood" {% if selected_cuisine == 'Local' %}selected{% endif %}>Seafood</option>
           </select>
 
           <label class="form-label">Rating</label>
           <select name="rating" class="form-select mb-3">
             <option value="">All</option>
+            <option value="5" {% if selected_rating == '5' %}selected{% endif %}>5+ stars</option>
             <option value="4" {% if selected_rating == '4' %}selected{% endif %}>4+ stars</option>
             <option value="3" {% if selected_rating == '3' %}selected{% endif %}>3+ stars</option>
           </select>
@@ -74,8 +76,8 @@
                 <div class="col-md-4 d-flex align-items-center">
                   {% if vendor.food_items.first.image %}
                     <img src="{{ vendor.food_items.first.image.url }}" class="img-fluid rounded-start object-fit-cover" style="width: 100%; max-height: 180px;" alt="{{ vendor.business_name }}">
-                  {% elif vendor.photo_url %}
-                    <img src="{{ vendor.photo_url.url }}" class="img-fluid rounded-start object-fit-cover" style="width: 100%; max-height: 180px;" alt="{{ vendor.business_name }}">
+                  {% elif vendor.photo %}
+                    <img src="{{ vendor.photo.url }}" class="img-fluid rounded-start object-fit-cover" style="width: 100%; max-height: 180px;" alt="{{ vendor.business_name }}">
                   {% else %}
                     <img src="{% static 'images/placeholder.png' %}" class="img-fluid rounded-start object-fit-cover" style="width: 100%; max-height: 180px;" alt="Vendor Image">
                   {% endif %}
@@ -84,7 +86,6 @@
                   <div class="card-body" style="min-height: 120px;">
                     <h5 class="card-title d-flex justify-content-between align-items-center">
                       {{ vendor.business_name }}
-                    
                       <span>
                         {% if vendor.average_rating|floatformat:1 >= 4.5 %}
                           <span class="badge bg-success ms-2">Top Rated</span>
@@ -93,7 +94,8 @@
                           <span class="badge bg-primary ms-1">New</span>
                         {% endif %}
                       </span>
-                    </h5>                    
+                    </h5>     
+
                     <p class="card-text">
                       {% if vendor.description %}
                         {{ vendor.description|truncatewords:25 }}
@@ -103,6 +105,23 @@
                         No description available.
                       {% endif %}
                     </p>
+
+                    <!-- ⭐️ Rating and Price Block -->
+                    <p class="mb-1"><strong>Rating:</strong> 
+                      {% if vendor.avg_rating %}
+                        {{ vendor.avg_rating|floatformat:1 }} ★
+                      {% else %}
+                        N/A
+                      {% endif %}
+                    </p>
+                    <p><strong>From:</strong> 
+                      {% if vendor.min_price %}
+                        ${{ vendor.min_price }}
+                      {% else %}
+                        —
+                      {% endif %}
+                    </p>
+
                     <a href="{% url 'vendor-detail' vendor.pk %}" class="btn btn-sm btn-outline-primary">View Details</a>
                     <a href="{% url 'vendor-booking' vendor.pk %}" class="btn btn-sm btn-success ms-2">Book Now</a>
                   </div>

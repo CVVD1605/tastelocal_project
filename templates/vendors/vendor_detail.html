@@ -4,31 +4,93 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h2>{{ vendor.business_name }}</h2>
-    <p>{{ vendor.description }}</p>
-    <p><strong>Category:</strong> {{ vendor.category }}</p>
-    <p><strong>Location:</strong> {{ vendor.location_text }}</p>
 
-    <hr>
+  <!-- Vendor Header -->
+  <h2>{{ vendor.business_name }}</h2>
+  <p>{{ vendor.description }}</p>
+  <p><strong>Category:</strong> {{ vendor.category }}</p>
+  <p><strong>Location:</strong> {{ vendor.location_text }}</p>
+  <p><strong>Average Rating:</strong> 
+    {% if vendor.average_rating %}
+      {{ vendor.average_rating }} / 5 ★
+    {% else %}
+      Not yet rated
+    {% endif %}
 
-    <h4>Menu Highlights</h4>
-    <div class="row">
-        {% for item in food_items %}
-        <div class="col-md-4 mb-3">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5>{{ item.name }}</h5>
-                    <p>{{ item.description|truncatewords:20 }}</p>
-                    <p><strong>${{ item.price }}</strong></p>
-                </div>
+  <hr>
+
+  <!-- Menu Highlights -->
+  <h4>Menu Highlights</h4>
+  <div class="row">
+    {% for item in food_items %}
+    <div class="col-md-4 mb-3">
+      <div class="card h-100">
+        <div class="position-relative" style="height: 200px; overflow: hidden;">
+          {% if item.image %}
+            <img src="{{ item.image.url }}" class="w-100 h-100" style="object-fit: cover;" alt="{{ item.name }}">
+          {% else %}
+            <div class="bg-secondary w-100 h-100 d-flex align-items-center justify-content-center text-white">
+              <span>No Image</span>
             </div>
+          {% endif %}
         </div>
-        {% empty %}
-        <p>This vendor has not listed any food items yet.</p>
-        {% endfor %}
+        <div class="card-body">
+          <h5>{{ item.name }}</h5>
+          <p>{{ item.description|truncatewords:20 }}</p>
+          <p><strong>${{ item.price|floatformat:2 }}</strong></p>
+        </div>
+      </div>
     </div>
+    {% empty %}
+      <p>This vendor has not listed any food items yet.</p>
+    {% endfor %}
+  </div>  
 
+  <hr>
+
+  <!-- CTA: Book or Review -->
+  <a href="{% url 'vendor-booking' vendor.pk %}" class="btn btn-success me-2">Book Now</a>
+
+  {% if user.is_authenticated and user.is_tourist %}
+    <a href="{% url 'submit-review' vendor.pk %}" class="btn btn-outline-primary">Leave a Review</a>
+  {% endif %}
+
+  <hr>
+
+  <!-- Reviews Section -->
+  <h4>Reviews</h4>
+  {% if reviews %}
+    {% for review in reviews %}
+    <div class="mb-4 d-flex">
+      {% if review.user.tourist_profile.profile_picture %}
+        <img src="{{ review.user.tourist_profile.profile_picture.url }}" alt="Profile Picture" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;">
+      {% else %}
+        <div class="bg-secondary rounded-circle me-3" style="width: 50px; height: 50px;"></div>
+      {% endif %}
+
+      <div>
+        <div class="d-flex justify-content-between">
+          <strong>{{ review.user.username }}</strong>
+          <small class="text-muted">{{ review.created_at|date:"M d, Y" }}</small>
+        </div>
+
+        <div>
+          {% for i in "12345"|make_list %}
+            {% if forloop.counter <= review.rating %}
+              <span class="text-warning">★</span>
+            {% else %}
+              <span class="text-muted">★</span>
+            {% endif %}
+          {% endfor %}
+        </div>
+
+        <p class="mb-1">{{ review.comment|default:"No comment left." }}</p>
+      </div>
+    </div>
     <hr>
-    <a href="{% url 'vendor-booking' vendor.pk %}" class="btn btn-success">Book Now</a>
+    {% endfor %}
+  {% else %}
+    <p class="text-muted">No reviews yet.</p>
+  {% endif %}
 </div>
 {% endblock %}

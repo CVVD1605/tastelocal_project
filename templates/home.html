@@ -29,13 +29,14 @@
       <div class="card h-100 position-relative">
         <span class="badge bg-warning text-dark position-absolute top-0 start-0 m-2">🌟 Featured</span>
     
-        {% if vendor.photo_url %}
-          <img src="{{ vendor.photo_url }}" class="card-img-top object-fit-cover" style="height:150px;" alt="{{ vendor.business_name }}">
-        {% elif vendor.food_items.first.image %}
-          <img src="{{ vendor.food_items.first.image.url }}" class="card-img-top object-fit-cover" style="height:150px;" alt="{{ vendor.business_name }}">
-        {% else %}
-          <img src="{% static 'images/placeholder.png' %}" class="card-img-top object-fit-cover" style="height:150px;" alt="Vendor Image">
-        {% endif %}
+        {% if vendor.photo %}
+        <img src="{{ vendor.photo.url }}" class="card-img-top object-fit-cover" style="height:150px;" alt="{{ vendor.business_name }}">
+      {% elif vendor.food_items.first.image %}
+        <img src="{{ vendor.food_items.first.image.url }}" class="card-img-top object-fit-cover" style="height:150px;" alt="{{ vendor.business_name }}">
+      {% else %}
+        <img src="{% static 'images/placeholder.png' %}" class="card-img-top object-fit-cover" style="height:150px;" alt="Vendor Image">
+      {% endif %}
+      
     
         <div class="card-body">
           <h5 class="card-title">{{ vendor.business_name }}</h5>
@@ -59,16 +60,4 @@
     </div>
   </div>
 
-  <!-- 🔹 Footer -->
-  <footer class="mt-5">
-    <hr>
-    <div class="d-flex justify-content-center gap-3">
-      <a href="#">About Us</a>
-      <a href="#">Help/FAQ</a>
-      <a href="#">Site Map</a>
-      <a href="#">Privacy Statement</a>
-      <a href="#">Contact Us</a>
-    </div>
-  </footer>
-</div>
 {% endblock %}

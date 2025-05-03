@@ -2,6 +2,23 @@
 {% load static %}
 
 {% block content %}
+{% load widget_tweaks %}
+
+<div class="container mt-5">
+    <div class="row">
+  
+      <!-- Insert Sidebar Here -->
+      <div class="col-md-3 mb-4">
+        <div class="list-group">
+          <a href="#" class="list-group-item list-group-item-action active">Dashboard Home</a>
+          <a href="{% url 'vendor-booking-list' %}" class="list-group-item list-group-item-action">View Bookings</a>
+          <a href="{% url 'vendor-fooditem-list' %}" class="list-group-item list-group-item-action">Manage Food Items</a>
+          <a href="{% url 'vendor-profile-edit' %}" class="list-group-item list-group-item-action">Edit Profile</a>
+        </div>
+      </div>
+  
+      <!-- Booking Table / Main Content -->
+      <div class="col-md-9">
 <div class="container mt-5">
     <h2 class="mb-4">My Food Items</h2>
 

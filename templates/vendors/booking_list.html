@@ -1,5 +1,21 @@
 {% extends 'base.html' %}
 {% block content %}
+
+<div class="container mt-5">
+  <div class="row">
+
+    <!-- ✅ Insert Sidebar Here -->
+    <div class="col-md-3 mb-4">
+      <div class="list-group">
+        <a href="#" class="list-group-item list-group-item-action active">Dashboard Home</a>
+        <a href="{% url 'vendor-booking-list' %}" class="list-group-item list-group-item-action">View Bookings</a>
+        <a href="{% url 'vendor-fooditem-list' %}" class="list-group-item list-group-item-action">Manage Food Items</a>
+        <a href="{% url 'vendor-profile-edit' %}" class="list-group-item list-group-item-action">Edit Profile</a>
+      </div>
+    </div>
+
+    <!-- Booking Table / Main Content -->
+    <div class="col-md-9">
 <div class="container mt-5">
   <h2 class="mb-4">Received Bookings</h2>
 
@@ -19,7 +35,21 @@
       <tbody>
         {% for booking in bookings %}
         <tr>
-          <td>{{ booking.tourist.username }}</td>
+          <td>
+            {{ booking.tourist.username }}
+            {% if booking.status == 'confirmed' %}
+              <br>
+              <small class="text-muted" data-bs-toggle="tooltip" title="Tourist's Email">
+                📧 {{ booking.tourist.email }}
+              </small>
+              {% if booking.tourist.tourist_profile.phone_number %}
+                <br>
+                <small class="text-muted" data-bs-toggle="tooltip" title="Tourist's Phone">
+                  📞 {{ booking.tourist.tourist_profile.phone_number }}
+                </small>
+              {% endif %}
+            {% endif %}
+          </td>
           <td>{{ booking.booking_date }}</td>
           <td>{{ booking.booking_time }}</td>
           <td>{{ booking.number_of_people }}</td>
