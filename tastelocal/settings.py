@@ -18,6 +18,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # or wherever you want users to go after login
 LOGOUT_REDIRECT_URL = '/'
 
+LOGIN_URL = '/login/'
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 

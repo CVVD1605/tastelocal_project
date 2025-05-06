@@ -15,39 +15,37 @@
     <div class="d-flex justify-content-center gap-3 mt-3">
       <a href="{% url 'search-results' %}?cuisine=Local" class="btn btn-info">Cuisine</a>
       <a href="{% url 'search-results' %}?nearby=true" class="btn btn-info">Nearby Me</a>
-      <a href="{% url 'search-results' %}?rating=4" class="btn btn-info">Top Rated</a>
+      <a href="{% url 'search-results' %}?rating=4&sort=top" class="btn btn-info">Top Rated</a>
       <a href="{% url 'search-results' %}?sort=new" class="btn btn-info">New Listings</a>
     </div>
   </div>
 
-  <!-- 🔹 Featured Vendors (dynamic) -->
-<div class="mt-5">
-  <h4>Featured Vendors</h4>
-  <div class="row mt-3">
-    {% for vendor in featured_vendors %}
-    <div class="col-md-4">
-      <div class="card h-100 position-relative">
-        <span class="badge bg-warning text-dark position-absolute top-0 start-0 m-2">🌟 Featured</span>
-    
-        {% if vendor.photo %}
-        <img src="{{ vendor.photo.url }}" class="card-img-top object-fit-cover" style="height:150px;" alt="{{ vendor.business_name }}">
-      {% elif vendor.food_items.first.image %}
-        <img src="{{ vendor.food_items.first.image.url }}" class="card-img-top object-fit-cover" style="height:150px;" alt="{{ vendor.business_name }}">
-      {% else %}
-        <img src="{% static 'images/placeholder.png' %}" class="card-img-top object-fit-cover" style="height:150px;" alt="Vendor Image">
-      {% endif %}
-      
-    
-        <div class="card-body">
-          <h5 class="card-title">{{ vendor.business_name }}</h5>
-          <a href="{% url 'vendor-detail' vendor.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+  <!-- 🔹 Featured Vendors -->
+  <div class="mt-5">
+    <h4>Featured Vendors</h4>
+    <div class="row mt-3">
+      {% for vendor in featured_vendors %}
+      <div class="col-md-4">
+        <div class="card h-100 position-relative">
+          <span class="badge bg-warning text-dark position-absolute top-0 start-0 m-2">🌟 Featured</span>
+
+          {% if vendor.photo %}
+            <img src="{{ vendor.photo.url }}" class="card-img-top object-fit-cover" style="height:150px;" alt="{{ vendor.business_name }}">
+          {% elif vendor.food_items.first.image %}
+            <img src="{{ vendor.food_items.first.image.url }}" class="card-img-top object-fit-cover" style="height:150px;" alt="{{ vendor.business_name }}">
+          {% else %}
+            <img src="{% static 'images/placeholder.png' %}" class="card-img-top object-fit-cover" style="height:150px;" alt="Vendor Image">
+          {% endif %}
+
+          <div class="card-body">
+            <h5 class="card-title">{{ vendor.business_name }}</h5>
+            <a href="{% url 'vendor-detail' vendor.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+          </div>
         </div>
       </div>
+      {% endfor %}
     </div>
-    {% endfor %}
   </div>
-</div>
-
 
   <!-- 🔹 CTA -->
   <div class="mt-5">
@@ -59,5 +57,5 @@
       <a href="{% url 'register' %}?role=vendor" class="btn btn-danger">Join as Vendor</a>
     </div>
   </div>
-
+</div>
 {% endblock %}

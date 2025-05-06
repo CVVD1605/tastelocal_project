@@ -23,13 +23,16 @@
 
   <div class="row">
 
-    <!-- 🔹 Sidebar Filters (Sticky) -->
+    <!-- 🔹 Sidebar Filters -->
     <div class="col-md-3 mb-4">
       <div class="position-sticky" style="top: 80px;">
         <h5 class="mb-3">Filters</h5>
         <form method="get" action="{% url 'search-results' %}">
           {% if query %}
             <input type="hidden" name="search" value="{{ query }}">
+          {% endif %}
+          {% if sort %}
+            <input type="hidden" name="sort" value="{{ sort }}">
           {% endif %}
 
           <label class="form-label">Cuisine</label>
@@ -40,12 +43,12 @@
             <option value="Indian" {% if selected_cuisine == 'Indian' %}selected{% endif %}>Indian</option>
             <option value="Italian" {% if selected_cuisine == 'Italian' %}selected{% endif %}>Italian</option>
             <option value="Local" {% if selected_cuisine == 'Local' %}selected{% endif %}>Local</option>
-            <option value="Seafood" {% if selected_cuisine == 'Local' %}selected{% endif %}>Seafood</option>
+            <option value="Seafood" {% if selected_cuisine == 'Seafood' %}selected{% endif %}>Seafood</option>
           </select>
 
           <label class="form-label">Rating</label>
           <select name="rating" class="form-select mb-3">
-            <option value="">All</option>
+            <option value="" {% if not selected_rating %}selected{% endif %}>All</option>
             <option value="5" {% if selected_rating == '5' %}selected{% endif %}>5+ stars</option>
             <option value="4" {% if selected_rating == '4' %}selected{% endif %}>4+ stars</option>
             <option value="3" {% if selected_rating == '3' %}selected{% endif %}>3+ stars</option>
@@ -94,7 +97,7 @@
                           <span class="badge bg-primary ms-1">New</span>
                         {% endif %}
                       </span>
-                    </h5>     
+                    </h5>
 
                     <p class="card-text">
                       {% if vendor.description %}
@@ -107,14 +110,14 @@
                     </p>
 
                     <!-- ⭐️ Rating and Price Block -->
-                    <p class="mb-1"><strong>Rating:</strong> 
+                    <p class="mb-1"><strong>Rating:</strong>
                       {% if vendor.avg_rating %}
                         {{ vendor.avg_rating|floatformat:1 }} ★
                       {% else %}
                         N/A
                       {% endif %}
                     </p>
-                    <p><strong>From:</strong> 
+                    <p><strong>From:</strong>
                       {% if vendor.min_price %}
                         ${{ vendor.min_price }}
                       {% else %}

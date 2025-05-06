@@ -16,8 +16,15 @@
     {% else %}
       Not yet rated
     {% endif %}
+  </p>
 
   <hr>
+
+  <!-- Google Map -->
+  {% if vendor.latitude and vendor.longitude %}
+    <h4 class="mt-5">Location Map</h4>
+    <div id="map" style="height: 300px;" class="mb-4"></div>
+  {% endif %}
 
   <!-- Menu Highlights -->
   <h4>Menu Highlights</h4>
@@ -93,4 +100,32 @@
     <p class="text-muted">No reviews yet.</p>
   {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAmp0o55ZLJ-KiyGFalWq1H9VIG8Lzyz7w&libraries=places"></script>
+<script>
+  function initMap() {
+    const lat = parseFloat("{{ vendor.latitude|default:'0' }}");
+    const lng = parseFloat("{{ vendor.longitude|default:'0' }}");
+
+    if (!isNaN(lat) && !isNaN(lng) && lat && lng) {
+      const vendorLocation = { lat: lat, lng: lng };
+      const map = new google.maps.Map(document.getElementById("map"), {
+        center: vendorLocation,
+        zoom: 15,
+      });
+
+      new google.maps.Marker({
+        position: vendorLocation,
+        map: map,
+        title: "{{ vendor.business_name }}",
+      });
+    } else {
+      console.warn("Map not loaded: missing lat/lng");
+    }
+  }
+
+  window.onload = initMap;
+</script>
 {% endblock %}

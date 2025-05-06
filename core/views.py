@@ -35,10 +35,16 @@ class SearchResultsView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        query = self.request.GET.get('search', '')
-        selected_cuisine = self.request.GET.get('cuisine')
-        selected_price = self.request.GET.get('price')
-        selected_rating = self.request.GET.get('rating')
+        request = self.request
+        query = request.GET.get('search', '')
+        selected_cuisine = request.GET.get('cuisine')
+        selected_price = request.GET.get('price')
+        selected_rating = request.GET.get('rating')
+        sort = request.GET.get('sort')  # 👈 New line to catch `sort=top`
+
+        # Handle sort=top as a shortcut for selected_rating = 4
+        if sort == 'top' and not selected_rating:
+            selected_rating = '4'
 
         # Annotate vendors with average rating and minimum price
         vendors = VendorProfile.objects.annotate(
@@ -57,10 +63,16 @@ class SearchResultsView(TemplateView):
             vendors = vendors.filter(cuisine__iexact=selected_cuisine)
 
         if selected_price:
-            vendors = vendors.filter(min_price__lte=int(selected_price))
+            try:
+                vendors = vendors.filter(min_price__lte=int(selected_price))
+            except ValueError:
+                pass  # Fail silently if price input is not numeric
 
         if selected_rating:
-            vendors = vendors.filter(avg_rating__gte=int(selected_rating))
+            try:
+                vendors = vendors.filter(avg_rating__gte=int(selected_rating))
+            except ValueError:
+                pass  # Same for rating
 
         context.update({
             'query': query,
@@ -68,57 +80,11 @@ class SearchResultsView(TemplateView):
             'selected_cuisine': selected_cuisine,
             'selected_price': selected_price,
             'selected_rating': selected_rating,
+            'sort': sort,
             'today': timezone.now() - timedelta(days=7),
         })
 
         return context
-# Search functionality
-# class SearchResultsView(TemplateView):
-#     template_name = 'search/results.html'
-
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-
-#         query = self.request.GET.get('search', '')
-#         selected_cuisine = self.request.GET.get('cuisine')
-#         selected_price = self.request.GET.get('price')
-#         selected_rating = self.request.GET.get('rating')
-
-#         # Always initialize base queryset
-#         vendor_queryset = VendorProfile.objects.prefetch_related('food_items').all()
-
-#         if query:
-#             vendor_queryset = vendor_queryset.filter(
-#                 Q(business_name__icontains=query) |
-#                 Q(description__icontains=query)
-#             )
-
-#         if selected_cuisine:
-#             vendor_queryset = vendor_queryset.filter(cuisine__iexact=selected_cuisine)
-
-#         if selected_price:
-#             vendor_queryset = vendor_queryset.filter(food_items__price__lte=selected_price)
-
-#         if selected_rating:
-#             vendor_queryset = vendor_queryset.filter(average_rating__gte=selected_rating)
-
-#         vendor_queryset = vendor_queryset.distinct()
-         
-#          # Add today's reference date for "New" badge logic
-#         context['today'] = timezone.now() - timedelta(days=7)
-
-#         # Debug print
-#         print("DEBUG - Vendors found:", vendor_queryset.count())
-#         print("DEBUG - Cuisine:", selected_cuisine)
-#         print("DEBUG - Query:", query)
-
-#         context['query'] = query
-#         context['vendor_results'] = vendor_queryset
-#         context['selected_cuisine'] = selected_cuisine
-#         context['selected_price'] = selected_price
-#         context['selected_rating'] = selected_rating
-
-#         return context
 
 # Register view for new users
 class CustomLoginView(LoginView):
@@ -369,13 +335,25 @@ class BookingCreateView(LoginRequiredMixin, CreateView):
     fields = ['booking_date', 'booking_time', 'number_of_people', 'special_request']
     template_name = 'bookings/booking_form.html'
 
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated or not hasattr(request.user, 'is_tourist') or not request.user.is_tourist:
+            messages.warning(request, "You need to be logged in as a tourist to make a booking.")
+            return redirect('login')
+        return super().dispatch(request, *args, **kwargs)
+
     def form_valid(self, form):
         form.instance.tourist = self.request.user
-        form.instance.vendor = VendorProfile.objects.get(pk=self.kwargs['pk'])
+        form.instance.vendor = get_object_or_404(VendorProfile, pk=self.kwargs['pk'])
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse_lazy('my-bookings')  # we'll build this next
+        messages.success(self.request, "Booking successful!")
+        return reverse('my-bookings')  # ✅ Return URL string instead of redirect
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['vendor'] = get_object_or_404(VendorProfile, pk=self.kwargs['pk'])
+        return context
 
 # Cancel a booking
 class BookingCancelView(LoginRequiredMixin, TemplateView):
