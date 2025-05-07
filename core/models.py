@@ -3,6 +3,7 @@ from django.db import models
 from django.conf import settings
 from django import forms
 from django.db.models.signals import post_save, post_delete
+from django.db.models import Avg
 from django.dispatch import receiver
 
 class CustomUser(AbstractUser):
@@ -52,7 +53,6 @@ class VendorProfile(models.Model):
     def __str__(self):
         return str(self.business_name)
     
-
 # NEW FoodItem
 class FoodItem(models.Model):
     vendor = models.ForeignKey(VendorProfile, on_delete=models.CASCADE, related_name='food_items')

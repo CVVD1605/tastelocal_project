@@ -2,22 +2,135 @@ from django.views.generic import ListView, CreateView, UpdateView, DeleteView, D
 from django.urls import reverse, reverse_lazy
 from .models import FoodItem, VendorProfile, Booking, Cuisine, Review, TouristProfile
 from .forms import VendorProfileForm, UserRegisterForm, EditProfileForm, ReviewForm, TouristAccountForm, TouristProfileForm, UserUpdateForm
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
 from django.contrib.auth import login, logout
+from django import forms
 from django.contrib import messages
 from django.utils.decorators import method_decorator
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import redirect, get_object_or_404, render
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.views import LoginView, PasswordChangeView
 from django.contrib.auth import get_user_model
-from django.db.models import Q, Avg, Min
+import json
+from django.db.models import Q, Avg, Min, Count
+from django.db.models.functions import TruncMonth
 from django.utils import timezone
 from datetime import timedelta
 from django.views import View
+from decimal import Decimal
 
 User = get_user_model()
+
+# Admin site
+class AdminDashboardView(TemplateView):
+    template_name = 'admin/admin_dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        total_users = User.objects.count()
+        total_tourists = User.objects.filter(is_tourist=True).count()
+        total_vendors = User.objects.filter(is_vendor=True).count()
+        total_reviews = Review.objects.count()
+        reviews_with_comment = Review.objects.exclude(comment__isnull=True).exclude(comment__exact="").count()
+        reviews_without_comment = total_reviews - reviews_with_comment
+
+        total_bookings = Booking.objects.count()
+        pending_bookings = Booking.objects.filter(status='pending').count()
+        confirmed_bookings = Booking.objects.filter(status='confirmed').count()
+
+        # 📊 Signups Over Last 6 Months
+        six_months_ago = timezone.now() - timedelta(days=180)
+        signup_data = (
+            User.objects.filter(date_joined__gte=six_months_ago)
+            .annotate(month=TruncMonth('date_joined'))
+            .values('month', 'is_tourist', 'is_vendor')
+            .annotate(count=Count('id'))
+            .order_by('month')
+        )
+
+        monthly_data = {}
+        for entry in signup_data:
+            month_str = entry['month'].strftime('%b %Y')
+            if month_str not in monthly_data:
+                monthly_data[month_str] = {'tourists': 0, 'vendors': 0}
+            if entry['is_tourist']:
+                monthly_data[month_str]['tourists'] += entry['count']
+            elif entry['is_vendor']:
+                monthly_data[month_str]['vendors'] += entry['count']
+
+        signup_months = list(monthly_data.keys())
+        signup_tourists = [monthly_data[m]['tourists'] for m in signup_months]
+        signup_vendors = [monthly_data[m]['vendors'] for m in signup_months]
+
+        context.update({
+            'total_users': total_users,
+            'total_tourists': total_tourists,
+            'total_vendors': total_vendors,
+            'total_reviews': total_reviews,
+            'reviews_with_comment': reviews_with_comment,
+            'reviews_without_comment': reviews_without_comment,
+            'total_bookings': total_bookings,
+            'pending_bookings': pending_bookings,
+            'confirmed_bookings': confirmed_bookings,
+            'signup_months': signup_months,
+            'signup_tourists': signup_tourists,
+            'signup_vendors': signup_vendors,
+        })
+
+        return context
+
+# Admin user list view
+class AdminUserListView(LoginRequiredMixin, TemplateView):
+    template_name = 'admin/admin_user_list.html'
+
+    @method_decorator(user_passes_test(lambda u: u.is_superuser))
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        role = self.request.GET.get('role')
+
+        users = User.objects.all().order_by('-date_joined')
+        if role == 'tourist':
+            users = users.filter(is_tourist=True)
+        elif role == 'vendor':
+            users = users.filter(is_vendor=True)
+
+        context['users'] = users
+        context['selected_role'] = role
+        return context
+    
+# User form for admin editing
+class AdminUserEditForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'is_active', 'is_staff', 'is_superuser']
+
+# User list view
+# Removed duplicate definition of AdminUserListView
+# User update view
+class AdminUserUpdateView(UserPassesTestMixin, LoginRequiredMixin, UpdateView):
+    model = User
+    form_class = AdminUserEditForm
+    template_name = 'admin/user_edit.html'
+    success_url = reverse_lazy('admin-user-list')
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def form_valid(self, form):
+        messages.success(self.request, "User updated successfully.")
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, "There was an error updating the user.")
+        return super().form_invalid(form)
 
 # Home page view
 class HomeView(TemplateView):
@@ -195,6 +308,7 @@ class VendorListView(ListView):
     template_name = 'vendors/vendor_list.html'
     context_object_name = 'vendors'
 
+# Filter vendors by cuisine
 class VendorDetailView(DetailView):
     model = VendorProfile
     template_name = 'vendors/vendor_detail.html'
@@ -202,8 +316,17 @@ class VendorDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['food_items'] = FoodItem.objects.filter(vendor=self.object)
-        context['reviews'] = self.object.reviews.select_related('user').order_by('-created_at')
+        vendor = self.object
+
+        # 🔹 Food items and reviews
+        context['food_items'] = FoodItem.objects.filter(vendor=vendor)
+        context['reviews'] = vendor.reviews.select_related('user').order_by('-created_at')
+
+        # 🔹 Recommended vendors based on cuisine (excluding the current one)
+        context['similar_vendors'] = VendorProfile.objects.filter(
+            cuisine=vendor.cuisine
+        ).exclude(id=vendor.id).order_by('-average_rating')[:3]
+
         return context
     
 # Vendor Profile Creation
@@ -225,11 +348,28 @@ class VendorProfileUpdateView(LoginRequiredMixin, UpdateView):
     template_name = 'vendors/vendor_profile_form.html'
 
     def get_object(self):
-        return self.request.user.vendor_profile
+        profile, _ = VendorProfile.objects.get_or_create(user=self.request.user)
+        return profile
 
-    def get_success_url(self):
+    def form_valid(self, form):
+        profile = form.save(commit=False)
+
+        # DEBUG POSTED VALUES
+        print("Posted lat/lng:", self.request.POST.get('latitude'), self.request.POST.get('longitude'))
+        print("Posted address:", self.request.POST.get('location_text'))
+
+        try:
+            profile.latitude = Decimal(self.request.POST.get('latitude') or '0')
+            profile.longitude = Decimal(self.request.POST.get('longitude') or '0')
+        except Exception as e:
+            print("Decimal conversion failed:", e)
+
+        profile.location_text = self.request.POST.get('location_text', '')
+
+        profile.save()
         messages.success(self.request, "Profile updated successfully.")
-        return reverse('vendor-dashboard')  # or wherever the vendor lands
+        return redirect('vendor-dashboard')
+
     
 ## Vendor Dashboard
 class VendorDashboardView(LoginRequiredMixin, TemplateView):
@@ -283,17 +423,32 @@ def edit_tourist_profile(request):
         'profile_form': profile_form,
     })
 
-class TouristProfileUpdateView(LoginRequiredMixin, UpdateView):
-    model = TouristProfile
-    form_class = TouristProfileForm
+class TouristProfileUpdateView(LoginRequiredMixin, TemplateView):
     template_name = 'tourists/edit_profile.html'
 
-    def get_object(self):
-        return self.request.user.tourist_profile
+    def get(self, request, *args, **kwargs):
+        user_form = forms.modelform_factory(User, fields=['username', 'email', 'first_name', 'last_name'])(instance=request.user)
+        profile_form = TouristProfileForm(instance=request.user.tourist_profile)
+        return self.render_to_response({
+            'user_form': user_form,
+            'profile_form': profile_form
+        })
 
-    def get_success_url(self):
-        messages.success(self.request, "Profile updated successfully.")
-        return reverse('tourist-dashboard')
+    def post(self, request, *args, **kwargs):
+        user_form_class = forms.modelform_factory(User, fields=['username', 'email', 'first_name', 'last_name'])
+        user_form = user_form_class(request.POST, instance=request.user)
+        profile_form = TouristProfileForm(request.POST, request.FILES, instance=request.user.tourist_profile)
+
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            profile_form.save()
+            messages.success(request, "Profile updated successfully.")
+            return redirect('tourist-dashboard')
+
+        return self.render_to_response({
+            'user_form': user_form,
+            'profile_form': profile_form
+        })
 
 # For Tourists – to see their own bookings (already exists):
 class TouristBookingListView(LoginRequiredMixin, ListView):

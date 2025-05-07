@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="justify-content-center">TasteLocal Admin Dashboard</h2>
+
+  <!-- Metrics Row -->
+  <div class="row text-center">
+    <div class="col-md-4 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5>Total Users</h5>
+          <p class="display-6 fw-bold">{{ total_users }}</p>
+          <p>Tourists: {{ total_tourists }} <br> Vendors: {{ total_vendors }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5>Total Reviews</h5>
+          <p class="display-6 fw-bold">{{ total_reviews }}</p>
+          <p>With Comment: {{ reviews_with_comment }}<br>Without: {{ reviews_without_comment }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5>Total Bookings</h5>
+          <p class="display-6 fw-bold">{{ total_bookings }}</p>
+          <p>Pending: {{ pending_bookings }}<br>Confirmed: {{ confirmed_bookings }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="row mt-5">
+    <!-- Monthly Signups -->
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="text-center">Monthly Sign-Ups</h5>
+          <canvas id="signupChart" height="250"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reviews Chart -->
+    <div class="col-md-3 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="text-center">Reviews Breakdown</h5>
+          <canvas id="reviewChart" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bookings Chart -->
+    <div class="col-md-3 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="text-center">Bookings Breakdown</h5>
+          <canvas id="bookingChart" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const signupChart = new Chart(document.getElementById('signupChart'), {
+    type: 'bar',
+    data: {
+      labels: {{ signup_months|safe }},
+      datasets: [
+        {
+          label: 'Tourists',
+          data: {{ signup_tourists|safe }},
+          backgroundColor: 'rgba(54, 162, 235, 0.7)',
+        },
+        {
+          label: 'Vendors',
+          data: {{ signup_vendors|safe }},
+          backgroundColor: 'rgba(255, 159, 64, 0.7)',
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+
+  const reviewChart = new Chart(document.getElementById('reviewChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['With Comment', 'Without Comment'],
+      datasets: [{
+        data: [{{ reviews_with_comment }}, {{ reviews_without_comment }}],
+        backgroundColor: ['#4caf50', '#ccc']
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom' }
+      }
+    }
+  });
+
+  const bookingChart = new Chart(document.getElementById('bookingChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Pending', 'Confirmed'],
+      datasets: [{
+        data: [{{ pending_bookings }}, {{ confirmed_bookings }}],
+        backgroundColor: ['#ff9800', '#2196f3']
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom' }
+      }
+    }
+  });
+</script>
+{% endblock %}

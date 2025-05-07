@@ -2,6 +2,7 @@ from django import forms
 from .models import VendorProfile, Booking, Review, TouristProfile, FoodItem
 from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
+from decimal import Decimal, InvalidOperation
 
 User = get_user_model()
 CustomUser = get_user_model()
@@ -25,6 +26,20 @@ class VendorProfileForm(forms.ModelForm):
             'photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
             'cuisine': forms.Select(attrs={'class': 'form-control'}),
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        # Convert manually submitted string inputs to decimals
+        try:
+            cleaned_data['latitude'] = Decimal(self.data.get('latitude'))
+            cleaned_data['longitude'] = Decimal(self.data.get('longitude'))
+        except (TypeError, InvalidOperation):
+            self.add_error('latitude', 'Latitude must be a valid decimal.')
+            self.add_error('longitude', 'Longitude must be a valid decimal.')
+
+        cleaned_data['location_text'] = self.data.get('location_text')
+        return cleaned_data
 
 class UserRegisterForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput)

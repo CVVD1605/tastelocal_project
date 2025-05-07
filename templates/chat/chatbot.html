@@ -1,0 +1,22 @@
+<div id="chat-box" style="max-height:300px; overflow-y:auto; border:1px solid #ccc; padding:10px;"></div>
+<input type="text" id="chat-input" placeholder="Ask me anything..." class="form-control">
+<button onclick="sendMessage()" class="btn btn-primary mt-2">Send</button>
+
+<script>
+function sendMessage() {
+    const message = document.getElementById("chat-input").value;
+    if (!message) return;
+
+    fetch("/chatbot/", {
+        method: "POST",
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({message})
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById("chat-box").innerHTML += "<p><b>You:</b> " + message + "</p>";
+        document.getElementById("chat-box").innerHTML += "<p><b>Bot:</b> " + data.reply + "</p>";
+        document.getElementById("chat-input").value = "";
+    });
+}
+</script>

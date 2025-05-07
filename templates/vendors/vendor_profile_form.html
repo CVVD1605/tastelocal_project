@@ -40,7 +40,8 @@
         <!-- Address Autocomplete -->
         <div class="mb-3">
           <label for="autocomplete" class="form-label">Business Address</label>
-          <input type="text" id="autocomplete" name="location_text" value="{{ form.location_text.value }}" class="form-control" placeholder="Start typing your address..." required>
+          <input type="text" id="autocomplete" name="location_text" class="form-control"
+                 value="{{ form.location_text.value }}">
         </div>
 
         <!-- Hidden Lat/Lng Fields -->
@@ -60,54 +61,64 @@
     </div>
   </div>
 </div>
+{% endblock %}
 
-<!-- Google Maps Script -->
+{% block scripts %}
+<!-- Google Maps JS -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAmp0o55ZLJ-KiyGFalWq1H9VIG8Lzyz7w&libraries=places"></script>
 <script>
-  let map, marker;
+  document.addEventListener('DOMContentLoaded', function () {
+    let map, marker;
 
-  function initMap() {
-    const defaultLatLng = { lat: 1.3521, lng: 103.8198 }; // Singapore
+    function initMap() {
+      const defaultLatLng = { lat: 1.3521, lng: 103.8198 }; // Singapore fallback
 
-    const mapOptions = {
-      center: defaultLatLng,
-      zoom: 12,
-    };
-
-    map = new google.maps.Map(document.getElementById("map"), mapOptions);
-
-    const input = document.getElementById("autocomplete");
-    const autocomplete = new google.maps.places.Autocomplete(input);
-    autocomplete.bindTo("bounds", map);
-
-    autocomplete.addListener("place_changed", () => {
-      const place = autocomplete.getPlace();
-      if (!place.geometry) return;
-
-      map.setCenter(place.geometry.location);
-      map.setZoom(15);
-
-      if (marker) marker.setMap(null);
-      marker = new google.maps.Marker({
-        map: map,
-        position: place.geometry.location,
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: defaultLatLng,
+        zoom: 12,
       });
 
-      document.getElementById("latitude").value = place.geometry.location.lat();
-      document.getElementById("longitude").value = place.geometry.location.lng();
-    });
+      const input = document.getElementById("autocomplete");
+      const autocomplete = new google.maps.places.Autocomplete(input);
+      autocomplete.bindTo("bounds", map);
 
-    // Pre-fill marker if lat/lng exists
-    const lat = parseFloat(document.getElementById("latitude").value);
-    const lng = parseFloat(document.getElementById("longitude").value);
-    if (!isNaN(lat) && !isNaN(lng)) {
-      const position = { lat: lat, lng: lng };
-      marker = new google.maps.Marker({ map, position });
-      map.setCenter(position);
-      map.setZoom(15);
+      autocomplete.addListener("place_changed", () => {
+        const place = autocomplete.getPlace();
+        if (!place.geometry) return;
+
+        const location = place.geometry.location;
+        document.getElementById("latitude").value = location.lat();
+        document.getElementById("longitude").value = location.lng();
+
+        map.setCenter(location);
+        map.setZoom(15);
+
+        if (marker) marker.setMap(null);
+        marker = new google.maps.Marker({
+          map: map,
+          position: location,
+        });
+      });
+
+      // Pre-fill marker if lat/lng exist
+      const lat = parseFloat(document.getElementById("latitude").value);
+      const lng = parseFloat(document.getElementById("longitude").value);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        const position = { lat: lat, lng: lng };
+        marker = new google.maps.Marker({ map, position });
+        map.setCenter(position);
+        map.setZoom(15);
+      }
     }
-  }
 
-  window.onload = initMap;
+    initMap(); // 🔥 Call only after DOMContentLoaded
+
+    // Debug log when submitting form
+    document.querySelector('form').addEventListener('submit', function () {
+      console.log("Submitting lat:", document.getElementById('latitude').value);
+      console.log("Submitting lng:", document.getElementById('longitude').value);
+      console.log("Submitting address:", document.getElementById('autocomplete').value);
+    });
+  });
 </script>
 {% endblock %}

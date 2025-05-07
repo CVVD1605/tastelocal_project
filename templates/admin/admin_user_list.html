@@ -1,0 +1,43 @@
+<!-- templates/admin/admin_user_list.html -->
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-4">User Management</h2>
+
+  <form method="get" class="mb-3">
+    <select name="role" class="form-select w-auto d-inline">
+      <option value="">All Users</option>
+      <option value="tourist" {% if selected_role == 'tourist' %}selected{% endif %}>Tourists</option>
+      <option value="vendor" {% if selected_role == 'vendor' %}selected{% endif %}>Vendors</option>
+    </select>
+    <button class="btn btn-primary ms-2">Filter</button>
+  </form>
+
+  <table class="table table-bordered table-hover">
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Date Joined</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td>{{ user.username }}</td>
+        <td>{{ user.email }}</td>
+        <td>
+          {% if user.is_tourist %}Tourist{% elif user.is_vendor %}Vendor{% else %}-{% endif %}
+        </td>
+        <td>{{ user.date_joined|date:"Y-m-d" }}</td>
+        <td>{{ user.is_active|yesno:"Active,Inactive" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="text-center text-muted">No users found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

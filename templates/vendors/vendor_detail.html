@@ -64,6 +64,34 @@
 
   <hr>
 
+  <!-- Similar Vendors Section -->
+  <h4 class="mt-5 mb-3">Similar Vendors You Might Like</h4>
+<div class="row">
+  {% for v in similar_vendors %}
+    <div class="col-md-4 mb-4">
+      <div class="card h-100 shadow-sm border-0 rounded-4">
+        {% if v.photo %}
+          <img src="{{ v.photo.url }}" class="card-img-top rounded-top-4" alt="{{ v.business_name }}" style="height: 200px; object-fit: cover;">
+        {% else %}
+          <div class="bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+            <span class="text-muted">No Image</span>
+          </div>
+        {% endif %}
+        <div class="card-body">
+          <h5 class="card-title mb-1">{{ v.business_name }}</h5>
+          <p class="text-muted small mb-2">{{ v.location_text }}</p>
+          <span class="badge bg-secondary mb-2">{{ v.cuisine }}</span>
+          <p class="text-warning mb-3" style="font-size: 0.95rem;">⭐ {{ v.average_rating }}</p>
+          <a href="{% url 'vendor-detail' v.pk %}" class="btn btn-outline-primary btn-sm w-100">View Profile</a>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <p>No similar vendors found.</p>
+  {% endfor %}
+</div>
+  
+
   <!-- Reviews Section -->
   <h4>Reviews</h4>
   {% if reviews %}

@@ -25,13 +25,18 @@ from .views import (
     VendorBookingListView,
     VendorBookingUpdateView,
     VendorProfileUpdateView,
-    VendorDashboardView
+    VendorDashboardView,
+    AdminDashboardView,
+    AdminUserListView,
 )
 from django.contrib.auth.views import LogoutView, PasswordChangeDoneView
 
 urlpatterns = [
     # Home page
     path('', HomeView.as_view(), name='home'),
+    # Admin page
+    path('site-admin/dashboard/', AdminDashboardView.as_view(), name='admin-dashboard'),
+    path('site-admin/users/', AdminUserListView.as_view(), name='admin-user-list'),
     # Authentication
     path('login/', CustomLoginView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
