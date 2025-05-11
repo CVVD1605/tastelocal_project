@@ -30,6 +30,7 @@ from .views import (
     AdminUserListView,
 )
 from django.contrib.auth.views import LogoutView, PasswordChangeDoneView
+from django.views.generic import TemplateView
 
 urlpatterns = [
     # Home page
@@ -70,6 +71,12 @@ urlpatterns = [
     path('vendor/bookings/', VendorBookingListView.as_view(), name='vendor-booking-list'),
     path('vendor/bookings/<int:pk>/update/', VendorBookingUpdateView.as_view(), name='vendor-booking-update'),
     path('vendor/dashboard/', VendorDashboardView.as_view(), name='vendor-dashboard'),
-    path('vendor/profile/edit/', VendorProfileUpdateView.as_view(), name='vendor-profile-edit')
+    path('vendor/profile/edit/', VendorProfileUpdateView.as_view(), name='vendor-profile-edit'),
+    #static pages
+    path('about/', TemplateView.as_view(template_name='static/about.html'), name='about'),
+    path('help/', TemplateView.as_view(template_name='static/help.html'), name='help'),
+    path('sitemap/', TemplateView.as_view(template_name='static/sitemap.html'), name='sitemap'),
+    path('privacy/', TemplateView.as_view(template_name='static/privacy.html'), name='privacy'),
+    path('contact/', TemplateView.as_view(template_name='static/contact.html'), name='contact')
 
 ]

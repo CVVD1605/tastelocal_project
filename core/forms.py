@@ -154,3 +154,10 @@ class FoodItemForm(forms.ModelForm):
             'price': forms.NumberInput(attrs={'class': 'form-control'}),
             'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
+
+#contact us form
+class ContactForm(forms.Form):
+    name = forms.CharField(max_length=100)
+    email = forms.EmailField()
+    subject = forms.CharField(max_length=150)
+    message = forms.CharField(widget=forms.Textarea)
