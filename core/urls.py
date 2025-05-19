@@ -28,6 +28,7 @@ from .views import (
     VendorDashboardView,
     AdminDashboardView,
     AdminUserListView,
+    TestBookingAPI,  # Added missing import
 )
 from django.contrib.auth.views import LogoutView, PasswordChangeDoneView
 from django.views.generic import TemplateView
@@ -77,6 +78,9 @@ urlpatterns = [
     path('help/', TemplateView.as_view(template_name='static/help.html'), name='help'),
     path('sitemap/', TemplateView.as_view(template_name='static/sitemap.html'), name='sitemap'),
     path('privacy/', TemplateView.as_view(template_name='static/privacy.html'), name='privacy'),
-    path('contact/', TemplateView.as_view(template_name='static/contact.html'), name='contact')
+    path('contact/', TemplateView.as_view(template_name='static/contact.html'), name='contact'),
+
+    path('test-api/book/<int:vendor_id>/', TestBookingAPI.as_view(), name='test-book-api'),
+
 
 ]

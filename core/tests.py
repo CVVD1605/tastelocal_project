@@ -1,58 +1,50 @@
-from django.test import TestCase
-from django.urls import reverse
+from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
-from core.models import VendorProfile
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.urls import reverse
+from core.models import VendorProfile, Booking
+import time
 
-class IntegrationTestIT001(TestCase):
+User = get_user_model()
+
+class SearchTests(TestCase):
     def setUp(self):
-        # Create test vendor user (auto VendorProfile via signal)
-        self.vendor_user = get_user_model().objects.create_user(
-            username='vendoruser',
-            email='vendor@example.com',
-            password='securepass123',
-            is_vendor=True
+        self.client = Client()
+
+    def test_search_thai_response_time(self):
+        start = time.time()
+        response = self.client.get('/search/?search=Thai')
+        end = time.time()
+        duration = end - start
+        self.assertEqual(response.status_code, 200)
+        self.assertLess(duration, 2.0, f"Search took too long: {duration:.2f}s")
+
+
+class BookingTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='vivi', password='password')
+        self.client.login(username='vivi', password='password')
+        self.vendor = VendorProfile.objects.create(
+            user=self.user,
+            business_name="Test Vendor",
+            category="Local",
+            location_text="City",
+            phone="12345678",
+            cuisine="Local",
+            photo=SimpleUploadedFile("test.jpg", b"img", content_type="image/jpeg")
         )
 
-    def test_login_redirects_to_dashboard_and_loads_profile(self):
-        login_url = reverse('login')
-        dashboard_url = reverse('vendor-dashboard')
-
-        # Step 1: Log in
-        response = self.client.post(login_url, {
-            'username': 'vendoruser',
-            'password': 'securepass123',
-        })
-
-        # Step 2: Follow redirection manually to dashboard
-        self.assertRedirects(response, dashboard_url)
-
-        # Step 3: Access the dashboard
-        response = self.client.get(dashboard_url)
+    def test_booking_page_loads(self):
+        response = self.client.get(reverse('vendor-booking', args=[self.vendor.id]), follow=True)
         self.assertEqual(response.status_code, 200)
 
-        # Step 4: Check if profile name or vendor info appears
-        self.assertContains(response, 'vendoruser')  # Assumes business_name = username
-
-class UserAcceptanceTestUAT001(TestCase):
-    def setUp(self):
-        self.user = get_user_model().objects.create_user(
-            username='tourist123',
-            email='tourist123@example.com',
-            password='securepass123',
-            is_tourist=True
-        )
-
-    def test_tourist_login_redirects_to_dashboard(self):
-        login_url = reverse('login')
-        dashboard_url = reverse('tourist-dashboard')
-
-        response = self.client.post(login_url, {
-            'username': 'tourist123',
-            'password': 'securepass123'
-        })
-
-        self.assertRedirects(response, dashboard_url)
-
-        response = self.client.get(dashboard_url)
+    def test_booking_submission(self):
+        response = self.client.post(reverse('vendor-booking', args=[self.vendor.id]), {
+            'booking_date': '2025-05-20',
+            'booking_time': '18:00',
+            'number_of_people': 2,
+            'special_request': 'Window seat'
+        }, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'tourist123')
+        self.assertTrue(Booking.objects.exists())

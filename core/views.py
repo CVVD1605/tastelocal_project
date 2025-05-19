@@ -189,7 +189,7 @@ class SearchResultsView(TemplateView):
 
         context.update({
             'query': query,
-            'vendor_results': vendors.distinct(),
+            'vendor_results': vendors.order_by('business_name').distinct(),
             'selected_cuisine': selected_cuisine,
             'selected_price': selected_price,
             'selected_rating': selected_rating,
@@ -206,7 +206,7 @@ class CustomLoginView(LoginView):
     def get_success_url(self):
         user = self.request.user
         if user.is_vendor:
-            return reverse_lazy('vendor-fooditem-list')
+            return reverse_lazy('vendor-dashboard')
         elif user.is_tourist:
             return reverse_lazy('tourist-dashboard')
         return reverse_lazy('home')
@@ -287,7 +287,7 @@ class VendorFoodItemListView(LoginRequiredMixin, ListView):
     context_object_name = 'fooditems'
 
     def get_queryset(self):
-        return FoodItem.objects.filter(vendor=self.request.user.vendor_profile)
+        return FoodItem.objects.filter(vendor=self.request.user.vendor_profile).order_by('name')
 
 # Update an existing food item
 class VendorFoodItemUpdateView(LoginRequiredMixin, UpdateView):
@@ -319,7 +319,7 @@ class VendorDetailView(DetailView):
         vendor = self.object
 
         # 🔹 Food items and reviews
-        context['food_items'] = FoodItem.objects.filter(vendor=vendor)
+        context['food_items'] = FoodItem.objects.filter(vendor=vendor).order_by('name')
         context['reviews'] = vendor.reviews.select_related('user').order_by('-created_at')
 
         # 🔹 Recommended vendors based on cuisine (excluding the current one)
@@ -585,3 +585,10 @@ class VendorBookingUpdateView(LoginRequiredMixin, View):
             messages.warning(request, "Invalid or duplicate action.")
 
         return redirect('vendor-booking-list')
+    
+
+@method_decorator(csrf_exempt, name='dispatch')
+class TestBookingAPI(View):
+    def post(self, request, vendor_id):
+        # simulate booking logic
+        return JsonResponse({"status": "success"}, status=200)
