@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-4">My Itinerary</h2>
+
+  {% if upcoming_bookings %}
+    <h5 class="mt-4">Upcoming Bookings</h5>
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Vendor</th><th>Date</th><th>Time</th><th>Guests</th><th>Status</th><th>Note</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for booking in upcoming_bookings %}
+        <tr>
+          <td>{{ booking.vendor.business_name }}</td>
+          <td>{{ booking.booking_date }}</td>
+          <td>{{ booking.booking_time }}</td>
+          <td>{{ booking.number_of_people }}</td>
+          <td><span class="badge bg-secondary">{{ booking.status|capfirst }}</span></td>
+          <td>{{ booking.special_request|default:"—" }}</td>
+          <td>
+            <a href="{% url 'booking-cancel' booking.id %}" class="btn btn-sm btn-danger">Cancel</a>
+            <a href="{% url 'submit-review' booking.vendor.id %}" class="btn btn-sm btn-outline-primary">Review</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="text-muted">No upcoming bookings.</p>
+  {% endif %}
+
+  {% if past_bookings %}
+    <h5 class="mt-5">Past Bookings</h5>
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Vendor</th><th>Date</th><th>Time</th><th>Guests</th><th>Status</th><th>Note</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for booking in past_bookings %}
+        <tr>
+          <td>{{ booking.vendor.business_name }}</td>
+          <td>{{ booking.booking_date }}</td>
+          <td>{{ booking.booking_time }}</td>
+          <td>{{ booking.number_of_people }}</td>
+          <td><span class="badge bg-light text-dark">{{ booking.status|capfirst }}</span></td>
+          <td>{{ booking.special_request|default:"—" }}</td>
+          <td>
+            <a href="{% url 'submit-review' booking.vendor.id %}" class="btn btn-sm btn-outline-primary">Review</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>
+{% endblock %}

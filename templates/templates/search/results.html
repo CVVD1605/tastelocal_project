@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+
+  <!-- Centered Search Bar -->
+  <div class="text-center mb-5">
+    <h1 class="mb-4">Search for Food Experience</h1>
+    <form method="GET" action="{% url 'search-results' %}" class="d-flex justify-content-center">
+      <div class="input-group w-50">
+        <input
+          type="text"
+          name="search"
+          class="form-control"
+          placeholder="Search by name, description..."
+          value="{{ query|default:'' }}"
+        >
+        <button class="btn btn-outline-primary" type="submit">🔍</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="row">
+
+    <!--  Sidebar Filters -->
+    <div class="col-md-3 mb-4">
+      <div class="position-sticky" style="top: 80px;">
+        <h5 class="mb-3">Filters</h5>
+        <form method="get" action="{% url 'search-results' %}">
+          {% if query %}
+            <input type="hidden" name="search" value="{{ query }}">
+          {% endif %}
+          {% if sort %}
+            <input type="hidden" name="sort" value="{{ sort }}">
+          {% endif %}
+
+          <label class="form-label">Cuisine</label>
+          <select name="cuisine" class="form-select mb-3">
+            <option value="">All</option>
+            <option value="Thai" {% if selected_cuisine == 'Thai' %}selected{% endif %}>Thai</option>
+            <option value="Japanese" {% if selected_cuisine == 'Japanese' %}selected{% endif %}>Japanese</option>
+            <option value="Indian" {% if selected_cuisine == 'Indian' %}selected{% endif %}>Indian</option>
+            <option value="Italian" {% if selected_cuisine == 'Italian' %}selected{% endif %}>Italian</option>
+            <option value="Local" {% if selected_cuisine == 'Local' %}selected{% endif %}>Local</option>
+            <option value="Seafood" {% if selected_cuisine == 'Seafood' %}selected{% endif %}>Seafood</option>
+          </select>
+
+          <label class="form-label">Rating</label>
+          <select name="rating" class="form-select mb-3">
+            <option value="" {% if not selected_rating %}selected{% endif %}>All</option>
+            <option value="5" {% if selected_rating == '5' %}selected{% endif %}>5+ stars</option>
+            <option value="4" {% if selected_rating == '4' %}selected{% endif %}>4+ stars</option>
+            <option value="3" {% if selected_rating == '3' %}selected{% endif %}>3+ stars</option>
+          </select>
+
+          <label class="form-label">Max Price ($)</label>
+          <select name="price" class="form-select mb-3">
+            <option value="">Any</option>
+            <option value="10" {% if selected_price == '10' %}selected{% endif %}>Under $10</option>
+            <option value="20" {% if selected_price == '20' %}selected{% endif %}>Under $20</option>
+          </select>
+
+          <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+          <a href="{% url 'search-results' %}" class="btn btn-secondary w-100 mt-2">Clear Filters</a>
+        </form>
+      </div>
+    </div>
+
+    <!-- 🔹 Vendor Cards -->
+    <div class="col-md-9">
+      {% if vendor_results %}
+        <p>Total vendors found: {{ vendor_results|length }}</p>
+        <div class="row row-cols-1 row-cols-md-2 g-4">
+          {% for vendor in vendor_results %}
+          <div class="col">
+            <div class="card shadow-sm h-100" style="min-height: 280px;">
+              <div class="row g-0">
+                <div class="col-md-4 d-flex align-items-center">
+                  {% if vendor.food_items.first.image %}
+                    <img src="{{ vendor.food_items.first.image.url }}" class="img-fluid rounded-start object-fit-cover" style="width: 100%; max-height: 180px;" alt="{{ vendor.business_name }}">
+                  {% elif vendor.photo %}
+                    <img src="{{ vendor.photo.url }}" class="img-fluid rounded-start object-fit-cover" style="width: 100%; max-height: 180px;" alt="{{ vendor.business_name }}">
+                  {% else %}
+                    <img src="{% static 'images/placeholder.png' %}" class="img-fluid rounded-start object-fit-cover" style="width: 100%; max-height: 180px;" alt="Vendor Image">
+                  {% endif %}
+                </div>
+                <div class="col-md-8">
+                  <div class="card-body" style="min-height: 120px;">
+                    <h5 class="card-title d-flex justify-content-between align-items-center">
+                      {{ vendor.business_name }}
+                      <span>
+                        {% if vendor.average_rating|floatformat:1 >= 4.5 %}
+                          <span class="badge bg-success ms-2">Top Rated</span>
+                        {% endif %}
+                        {% if vendor.created_at >= today|date:"Y-m-d" %}
+                          <span class="badge bg-primary ms-1">New</span>
+                        {% endif %}
+                      </span>
+                    </h5>
+
+                    <p class="card-text">
+                      {% if vendor.description %}
+                        {{ vendor.description|truncatewords:25 }}
+                      {% elif vendor.food_items.first.description %}
+                        {{ vendor.food_items.first.description|truncatewords:25 }}
+                      {% else %}
+                        No description available.
+                      {% endif %}
+                    </p>
+
+                    <!-- ⭐️ Rating and Price Block -->
+                    <p class="mb-1"><strong>Rating:</strong>
+                      {% if vendor.avg_rating %}
+                        {{ vendor.avg_rating|floatformat:1 }} ★
+                      {% else %}
+                        N/A
+                      {% endif %}
+                    </p>
+                    <p><strong>From:</strong>
+                      {% if vendor.min_price %}
+                        ${{ vendor.min_price }}
+                      {% else %}
+                        —
+                      {% endif %}
+                    </p>
+
+                    <a href="{% url 'vendor-detail' vendor.pk %}" class="btn btn-sm btn-outline-primary">View Details</a>
+                    <a href="{% url 'vendor-booking' vendor.pk %}" class="btn btn-sm btn-success ms-2">Book Now</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-muted">No vendors found for "{{ query }}".</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

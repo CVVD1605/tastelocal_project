@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="row">
+    <!-- Sidebar (Optional Filters) -->
+    <div class="col-md-3 mb-4">
+      <div class="list-group">
+        <a href="#" class="list-group-item list-group-item-action active">Dashboard Home</a>
+        <a href="{% url 'vendor-booking-list' %}" class="list-group-item list-group-item-action">View Bookings</a>
+        <a href="{% url 'vendor-fooditem-list' %}" class="list-group-item list-group-item-action">Manage Food Items</a>
+        <a href="{% url 'vendor-profile-edit' %}" class="list-group-item list-group-item-action">Edit Profile</a>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-md-9">
+      <div class="card mb-4 shadow">
+        <div class="card-body d-flex align-items-center">
+          <div class="me-4">
+            {% if vendor.photo %}
+              <img src="{{ vendor.photo.url }}" alt="Vendor Photo" width="120" class="rounded border">
+            {% else %}
+              <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="width:120px; height:120px; border-radius: 0.25rem;">
+                No Image
+              </div>
+            {% endif %}
+          </div>
+          <div>
+            <h4 class="card-title mb-1">{{ vendor.business_name }}</h4>
+            <p class="mb-1"><strong>Cuisine:</strong> {{ vendor.cuisine }}</p>
+            <p class="mb-1"><strong>Location:</strong> {{ vendor.location_text }}</p>
+            <p class="mb-1"><strong>Contact:</strong> {{ vendor.phone }}</p>
+            <p class="mb-1"><strong>Average Rating:</strong> {{ vendor.average_rating|floatformat:1 }} ★</p>
+            <a href="{% url 'vendor-profile-edit' %}" class="btn btn-sm btn-outline-primary mt-2">Edit Profile</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <a href="{% url 'vendor-booking-list' %}" class="btn btn-primary w-100">Total Bookings</a>
+        </div>
+        <div class="col-md-4 mb-3">
+          <a href="{% url 'vendor-fooditem-list' %}" class="btn btn-outline-secondary w-100">Manage Food Items</a>
+        </div>
+        <div class="col-md-4 mb-3">
+          <a href="{% url 'vendor-detail' vendor.pk %}" class="btn btn-outline-dark w-100">Public Vendor Page</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

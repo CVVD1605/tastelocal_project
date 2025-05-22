@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+  <h2>Site Map</h2>
+  <ul class="list-unstyled">
+    <li><a href="{% url 'home' %}">Home</a></li>
+    <li><a href="{% url 'search-results' %}">Search</a></li>
+    <li><a href="{% url 'my-bookings' %}">My Bookings</a></li>
+  </ul>
+</div>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+{% load widget_tweaks %}
+
+<div class="container mt-5">
+    <div class="row">
+  
+      <!-- Insert Sidebar Here -->
+      <div class="col-md-3 mb-4">
+        <div class="list-group">
+          <a href="#" class="list-group-item list-group-item-action active">Dashboard Home</a>
+          <a href="{% url 'vendor-booking-list' %}" class="list-group-item list-group-item-action">View Bookings</a>
+          <a href="{% url 'vendor-fooditem-list' %}" class="list-group-item list-group-item-action">Manage Food Items</a>
+          <a href="{% url 'vendor-profile-edit' %}" class="list-group-item list-group-item-action">Edit Profile</a>
+        </div>
+      </div>
+  
+      <!-- Booking Table / Main Content -->
+      <div class="col-md-9">
+<div class="container mt-5">
+    <h2 class="mb-4">My Food Items</h2>
+
+    <div class="mb-3">
+        <a href="{% url 'vendor-fooditem-add' %}" class="btn btn-primary">Add New Food Item</a>
+    </div>
+
+    {% if fooditems %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>Item Name</th>
+                    <th>Description</th>
+                    <th>Price</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in fooditems %}
+                <tr>
+                    <td>
+                        {% if item.image %}
+                            <img src="{{ item.image.url }}" alt="{{ item.name }}" style="height: 60px; width: auto;">
+                        {% else %}
+                            <span class="text-muted">No image</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.description }}</td>
+                    <td>${{ item.price }}</td>
+                    <td>
+                        <a href="{% url 'vendor-fooditem-edit' item.pk %}" class="btn btn-sm btn-warning">Edit</a>
+                        <a href="{% url 'vendor-fooditem-delete' item.pk %}" class="btn btn-sm btn-danger">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            
+        </table>
+    {% else %}
+        <p>No food items found. Start by adding one!</p>
+    {% endif %}
+</div>
+{% endblock %}

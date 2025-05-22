@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="container mt-5">
+
+  <!-- Vendor Header -->
+  <h2>{{ vendor.business_name }}</h2>
+  <p>{{ vendor.description }}</p>
+  <p><strong>Category:</strong> {{ vendor.category }}</p>
+  <p><strong>Location:</strong> {{ vendor.location_text }}</p>
+  <p><strong>Average Rating:</strong> 
+    {% if vendor.average_rating %}
+      {{ vendor.average_rating }} / 5 ★
+    {% else %}
+      Not yet rated
+    {% endif %}
+  </p>
+
+  <hr>
+
+  <!-- Google Map -->
+  {% if vendor.latitude and vendor.longitude %}
+    <h4 class="mt-5">Location Map</h4>
+    <div id="map" style="height: 300px;" class="mb-4"></div>
+  {% endif %}
+
+  <!-- Menu Highlights -->
+  <h4>Menu Highlights</h4>
+  <div class="row">
+    {% for item in food_items %}
+    <div class="col-md-4 mb-3">
+      <div class="card h-100">
+        <div class="position-relative" style="height: 200px; overflow: hidden;">
+          {% if item.image %}
+            <img src="{{ item.image.url }}" class="w-100 h-100" style="object-fit: cover;" alt="{{ item.name }}">
+          {% else %}
+            <div class="bg-secondary w-100 h-100 d-flex align-items-center justify-content-center text-white">
+              <span>No Image</span>
+            </div>
+          {% endif %}
+        </div>
+        <div class="card-body">
+          <h5>{{ item.name }}</h5>
+          <p>{{ item.description|truncatewords:20 }}</p>
+          <p><strong>${{ item.price|floatformat:2 }}</strong></p>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+      <p>This vendor has not listed any food items yet.</p>
+    {% endfor %}
+  </div>  
+
+  <hr>
+
+  <!-- CTA: Book or Review -->
+  <a href="{% url 'vendor-booking' vendor.pk %}" class="btn btn-success me-2">Book Now</a>
+
+  {% if user.is_authenticated and user.is_tourist %}
+    <a href="{% url 'submit-review' vendor.pk %}" class="btn btn-outline-primary">Leave a Review</a>
+  {% endif %}
+
+  <hr>
+
+  <!-- Similar Vendors Section -->
+  <h4 class="mt-5 mb-3">Similar Vendors You Might Like</h4>
+<div class="row">
+  {% for v in similar_vendors %}
+    <div class="col-md-4 mb-4">
+      <div class="card h-100 shadow-sm border-0 rounded-4">
+        {% if v.photo %}
+          <img src="{{ v.photo.url }}" class="card-img-top rounded-top-4" alt="{{ v.business_name }}" style="height: 200px; object-fit: cover;">
+        {% else %}
+          <div class="bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+            <span class="text-muted">No Image</span>
+          </div>
+        {% endif %}
+        <div class="card-body">
+          <h5 class="card-title mb-1">{{ v.business_name }}</h5>
+          <p class="text-muted small mb-2">{{ v.location_text }}</p>
+          <span class="badge bg-secondary mb-2">{{ v.cuisine }}</span>
+          <p class="text-warning mb-3" style="font-size: 0.95rem;">⭐ {{ v.average_rating }}</p>
+          <a href="{% url 'vendor-detail' v.pk %}" class="btn btn-outline-primary btn-sm w-100">View Profile</a>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <p>No similar vendors found.</p>
+  {% endfor %}
+</div>
+  
+
+  <!-- Reviews Section -->
+<h4 class="mt-5">Reviews</h4>
+{% if reviews %}
+  {% for review in reviews %}
+    <div class="mb-4 border-bottom pb-3 d-flex gap-3">
+      <!-- User Avatar -->
+      {% if review.user.tourist_profile.profile_picture %}
+        <img src="{{ review.user.tourist_profile.profile_picture.url }}" class="rounded-circle" style="width: 50px; height: 50px; object-fit: cover;" alt="{{ review.user.username }}">
+      {% else %}
+        <div class="bg-secondary rounded-circle d-flex justify-content-center align-items-center text-white" style="width: 50px; height: 50px;">
+          <span class="fw-bold">{{ review.user.username|slice:":1" }}</span>
+        </div>
+      {% endif %}
+
+      <!-- Review Content -->
+      <div class="flex-grow-1">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-1">
+          <div class="fw-semibold">{{ review.user.username }}</div>
+          <div class="text-muted small">{{ review.created_at|date:"F j, Y" }}</div>
+        </div>
+
+        <!-- Stars -->
+        <div class="mb-1">
+          {% for i in "12345"|make_list %}
+            {% if forloop.counter <= review.rating %}
+              <span class="text-warning">★</span>
+            {% else %}
+              <span class="text-muted">★</span>
+            {% endif %}
+          {% endfor %}
+        </div>
+
+        <!-- Comment -->
+        <div>
+          <p class="mb-0 text-body">{{ review.comment|default:"No comment left." }}</p>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+{% else %}
+  <p class="text-muted">No reviews yet.</p>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAmp0o55ZLJ-KiyGFalWq1H9VIG8Lzyz7w&libraries=places"></script>
+<script>
+  function initMap() {
+    const lat = parseFloat("{{ vendor.latitude|default:'0' }}");
+    const lng = parseFloat("{{ vendor.longitude|default:'0' }}");
+
+    if (!isNaN(lat) && !isNaN(lng) && lat && lng) {
+      const vendorLocation = { lat: lat, lng: lng };
+      const map = new google.maps.Map(document.getElementById("map"), {
+        center: vendorLocation,
+        zoom: 15,
+      });
+
+      new google.maps.Marker({
+        position: vendorLocation,
+        map: map,
+        title: "{{ vendor.business_name }}",
+      });
+    } else {
+      console.warn("Map not loaded: missing lat/lng");
+    }
+  }
+
+  window.onload = initMap;
+</script>
+{% endblock %}
